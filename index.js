@@ -5,6 +5,7 @@ let data = {};
 
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
 const { deserialize } = require('v8');
+const { type } = require('os');
 
 const client = new Client({
     intents: [
@@ -78,60 +79,70 @@ const petalTypes = [
 const petalStats = [
     {
         name: "Basic", 
+        description: "A basic petal, not too strong, not too weak.", 
         damage: 2, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Peas", 
+        description: "4 in 1 deal.", 
         damage: 3, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Light", 
+        description: "Fast reload, but low damage.", 
         damage: 2, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Rock", 
+        description: "Very durable.", 
         damage: 4, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Leaf", 
+        description: "Heals you, but does low damage.", 
         damage: 2, 
         heal: 2, 
         max_health: 0
     }, 
     {
         name: "Wing", 
+        description: "It hits hard.", 
         damage: 4, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Bone", 
+        description: "Sturdy.", 
         damage: 4, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Starfish", 
+        description: "Good heal, but low damage.", 
         damage: 1, 
         heal: 3, 
         max_health: 0
     }, 
     {
         name: "Missile", 
+        description: "Goes off in a random direction, so it can miss the target.", 
         damage: 4, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Faster", 
+        description: "Makes your petals spin faster, giving them a chance to hit twice.", 
         damage: 2, 
         heal: 0, 
         max_health: 0, 
@@ -139,24 +150,28 @@ const petalStats = [
     }, 
     {
         name: "Cactus", 
+        description: "Somehow increases your max health.", 
         damage: 2, 
         heal: 0, 
         max_health: 10
     }, 
     {
         name: "Lightning", 
+        description: "Chains off all the enemies, damaging all of them.", 
         damage: 2, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Glass", 
+        description: "Can hit 0-2 enemies, stacking damage.", 
         damage: 3, 
         heal: 0, 
         max_health: 0
     }, 
     {
         name: "Rose", 
+        description: "Very weak for offence, but excellent for healing.", 
         damage: 0, 
         heal: 4, 
         max_health: 0
@@ -510,6 +525,63 @@ const commands = [
                 description: "The petal to remove", 
                 type: ApplicationCommandOptionType.Number, 
                 required: true
+            }
+        ]
+    }, 
+    {
+        name: "petal_stats", 
+        description: "Get the stats for a petal.", 
+        options: [
+            {
+                name: "petal", 
+                description: "The petal to get stats of.", 
+                type: ApplicationCommandOptionType.Number, 
+                required: true, 
+                choices: petalTypes.map(( type, index ) => ({ name: type, value: index}))
+            }, 
+            {
+                name: "rarity", 
+                description: "Petal rarity.", 
+                type: ApplicationCommandOptionType.Number, 
+                required: true, 
+                choices: [
+                    {
+                        name: "Common", 
+                        value: 0
+                    }, 
+                    {
+                        name: "Unusual", 
+                        value: 1
+                    }, 
+                    {
+                        name: "Rare", 
+                        value: 2
+                    }, 
+                    {
+                        name: "Epic", 
+                        value: 3
+                    }, 
+                    {
+                        name: "Legendary", 
+                        value: 4
+                    }, 
+                    {
+                        name: "Mythic", 
+                        value: 5
+                    }, 
+                    {
+                        name: "Ultra", 
+                        value: 6
+                    }, 
+                    {
+                        name: "Super", 
+                        value: 7
+                    }, 
+                    {
+                        name: "Unique", 
+                        value: 8
+                    }
+                ]
             }
         ]
     }
@@ -914,6 +986,26 @@ client.on('interactionCreate', (interaction) => {
         saveData();
         interaction.reply(`Removed ${petalTypes[petal]} from ${user.username}`)
     }
+    if (interaction.commandName == "petal_stats") {
+        const petal = interaction.options.get("petal").value;
+        const rarity = interaction.options.get("rarity").value;
+
+        let statsText = "";
+        for (const [stat, val] of Object.entries(petalStats[petal])) {
+            if(val <= 0 && stat != "damage") continue;
+            if(stat == "rotation") {
+                statsText += `**${stat}:** ${val * rarity}\n`
+                continue;
+            }
+            if(Number.isFinite(parseInt(val))) {
+                statsText += `**${stat}:** ${val * (3 ** rarity)}\n`
+            } else {
+                statsText += `**${stat}:** ${val}\n`
+            }
+        }
+
+        interaction.reply(statsText);
+    }
 
     if (interaction.isButton()) {
         // super mobs to fix
@@ -990,7 +1082,7 @@ client.on('interactionCreate', (interaction) => {
                 let extraInfo = "";
                 let doubleDamage = false;
                 if(data[user.id]["loadout"].includes(9)) {
-                    doubleDamage = (Math.random() < (petalStats[9].rotation * (3 ** data[user.id].inventory["9"])));
+                    doubleDamage = (Math.random() < (petalStats[9].rotation * data[user.id].inventory["9"]));
                 }
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
