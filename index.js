@@ -3,8 +3,6 @@ const fs = require('fs');
 const dataFile = "saved_data.json";
 let data = {};
 
-//https://github.com/CasaProductionMaker/opbot.git
-
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
 const { deserialize } = require('v8');
 
