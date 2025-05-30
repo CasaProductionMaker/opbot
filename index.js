@@ -162,7 +162,7 @@ client.on('interactionCreate', (interaction) => {
             rows[rows.length - 1].addComponents(
                 new ButtonBuilder()
                     .setCustomId(`craft-${petal}`)
-                    .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${util.getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                    .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                     .setStyle(ButtonStyle.Primary)
             );
             petalsSoFar++;
@@ -319,15 +319,16 @@ client.on('interactionCreate', (interaction) => {
         let rows = [];
         let petalsSoFar = 0;
         for (const petal in data[user.id]["inventory"]) {
+            console.log("Petal", petal);
             if(petalsSoFar % 5 == 0) {
                 rows.push(new ActionRowBuilder());
             }
             let style = ButtonStyle.Primary;
-            let text = `${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]}`;
+            let text = `${getPetalRarity(petal)} ${getPetalType(petal)}`;
             let dis = false;
-            if(data[user.id]["loadout"].indexOf(parseInt(petal)) >= 0) {
+            if(data[user.id]["loadout"].indexOf(petal) >= 0) {
                 dis = true;
-                if(data[user.id]["loadout"].indexOf(parseInt(petal)) == slot) {
+                if(data[user.id]["loadout"].indexOf(petal) == slot) {
                     style = ButtonStyle.Success;
                     text += ` already in slot ${slot+1}!`;
                 } else {
@@ -631,7 +632,6 @@ client.on('interactionCreate', (interaction) => {
                         if(randomLootDropChance <= 2.0) {
                             const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
                             let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
-                            console.log("petalToDrop", petalToDrop);
                             if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
                                 petalToDrop += "_" + (grindRarity - 2);
                             } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
@@ -644,7 +644,6 @@ client.on('interactionCreate', (interaction) => {
                             }
                             petalDrops.push(petalToDrop);
                         }
-                        petalDrops.push("5_5");
                     }
                     let gotRareLoot = Math.random() < 0.05;
                     if(gotRareLoot) {
@@ -653,7 +652,7 @@ client.on('interactionCreate', (interaction) => {
                     editXP(user.id, totalXP);
                     data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
                     let petalDropText = "\n**New petals dropped!**";
-                    console.log("petalDrops", petalDrops);
+                    // console.log("petalDrops", petalDrops);
                     for(const pet in petalDrops) {
                         let the_petal = petalDrops[pet];
                         if (the_petal.split("_")[1] < 0) continue;
@@ -842,7 +841,7 @@ client.on('interactionCreate', (interaction) => {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             const petalType = interaction.customId.split("-")[1];
-            const currentPetalRarity = data[user.id]["inventory"][petalType];
+            const currentPetalRarity = petalType.split("_")[1];
 
             if(currentPetalRarity >= petalRarities.length - 1) {
                 interaction.reply("You have already reached the max rarity.");
@@ -857,7 +856,8 @@ client.on('interactionCreate', (interaction) => {
             data[user.id]["stars"] -= reqirement;
             saveData();
 
-            if (Math.random() > petalCraftChances[currentPetalRarity]) { // failed craft
+            console.log(petalCraftChances[currentPetalRarity]);
+            if (Math.random() > petalCraftChances[currentPetalRarity]+1) { // failed craft
                 let rows = [];
                 let petalsSoFar = 0;
                 for (const petal in data[user.id]["inventory"]) {
@@ -867,7 +867,7 @@ client.on('interactionCreate', (interaction) => {
                     rows[rows.length - 1].addComponents(
                         new ButtonBuilder()
                             .setCustomId(`craft-${petal}`)
-                            .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${util.getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                            .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                             .setStyle(ButtonStyle.Primary)
                     );
                     petalsSoFar++;
@@ -880,7 +880,25 @@ client.on('interactionCreate', (interaction) => {
                 return;
             }
 
-            data[user.id]["inventory"][petalType] += 1; // success
+            data[user.id]["inventory"][petalType] -= 1; // success
+            let newPetalType = petalType.split("_")[0] + "_" + (parseInt(currentPetalRarity) + 1);
+
+            // remove 1 of prev rarity
+            if(data[user.id]["inventory"][petalType] <= 0) {
+                delete data[user.id]["inventory"][petalType];
+
+                let loadoutIndex = data[user.id]["loadout"].indexOf(petalType)
+                if(loadoutIndex > -1) {
+                    data[user.id]["loadout"][loadoutIndex] = newPetalType;
+                }
+            }
+
+            if(data[user.id]["inventory"][newPetalType]) {
+                data[user.id]["inventory"][newPetalType] += 1;
+            } else {
+                data[user.id]["inventory"][newPetalType] = 1;
+            }
+            saveData();
             let rows = [];
             let petalsSoFar = 0;
             for (const petal in data[user.id]["inventory"]) {
@@ -890,13 +908,14 @@ client.on('interactionCreate', (interaction) => {
                 rows[rows.length - 1].addComponents(
                     new ButtonBuilder()
                         .setCustomId(`craft-${petal}`)
-                        .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${util.getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                        .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                         .setStyle(ButtonStyle.Primary)
                 );
                 petalsSoFar++;
             }
+            console.log("currentPetalRarity", parseInt(currentPetalRarity)+1)
             interaction.update({
-                content: `Crafted your petal to a ${petalRarities[currentPetalRarity + 1]} for ${reqirement} stars!\nSelect a petal to craft.\nYour stars: ${data[user.id].stars}`, 
+                content: `Crafted your petal to a ${petalRarities[parseInt(currentPetalRarity) + 1]} for ${reqirement} stars!\nSelect a petal to craft.\nYour stars: ${data[user.id].stars}`, 
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
@@ -905,7 +924,7 @@ client.on('interactionCreate', (interaction) => {
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             const slotID = interaction.customId.split("-")[1];
             const petalToSlotIn = interaction.customId.split("-")[2];
-            data[user.id]["loadout"][slotID] = parseInt(petalToSlotIn);
+            data[user.id]["loadout"][slotID] = petalToSlotIn;
             saveData();
 
             let rows = [];
@@ -915,11 +934,11 @@ client.on('interactionCreate', (interaction) => {
                     rows.push(new ActionRowBuilder());
                 }
                 let style = ButtonStyle.Primary;
-                let text = `${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]}`;
+                let text = `${getPetalRarity(petal)} ${getPetalType(petal)}`;
                 let dis = false;
-                if(data[user.id]["loadout"].indexOf(parseInt(petal)) >= 0) {
+                if(data[user.id]["loadout"].indexOf(petal) >= 0) {
                     dis = true;
-                    if(data[user.id]["loadout"].indexOf(parseInt(petal)) == parseInt(slotID)) {
+                    if(data[user.id]["loadout"].indexOf(petal) == parseInt(slotID)) {
                         style = ButtonStyle.Success;
                         text += ` already in slot ${parseInt(slotID)+1}!`;
                     } else {
