@@ -239,30 +239,36 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         });
     }
-    if (interaction.commandName === 'profile') {
+    if (interaction.commandName === 'profile') { // Profile command
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
+        
+        // print general stats
         let xp = data[inter.user.id].xp;
         let stars = data[inter.user.id].stars;
         let level = data[inter.user.id].level;
         let maxHealth = data[inter.user.id].max_health;
         let health = data[inter.user.id].health != null ? data[inter.user.id].health : maxHealth;
         let inventoryText = "";
+
+        // print inventory
         for (const petal in data[inter.user.id].inventory) {
             inventoryText += petalToText(petal, inter);
         }
+
+        // print loadout
         let loadoutText = "";
         for (const i in data[inter.user.id].loadout) {
-            console.log("Loadout", i);
             const petal = data[inter.user.id].loadout[i];
-            console.log("petal", petal);
             if (petal.split("_")[0] == "-1") {
                 loadoutText += `- Empty Slot!\n`;
                 continue;
             }
             loadoutText += petalToText(petal, inter, false);
         }
+
+        // print final text
         let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}`;
         interaction.reply({
             content: finalText
@@ -534,31 +540,32 @@ client.on('interactionCreate', (interaction) => {
                 }
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
-                        if (petal == -1) continue; // Skip if petal is -1
-                        if (petal == 8) {
+                        p_id = petal.split("_")[0];
+                        if (p_id == -1) continue; // Skip if petal is -1
+                        if (p_id == 8) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0) {
-                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             } else {
                                 extraInfo += "\nYour Missile missed!"
                             }
                             continue;
                         }
-                        if (petal == 11) {
+                        if (p_id == 11) {
                             for (let mobID = 0; mobID < data[user.id]["grind-info"].mobs.length; mobID++)
                             if(data[user.id]["grind-info"].mobs[mobID].health > 0) {
-                                data[user.id]["grind-info"].mobs[mobID].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             }
                             continue;
                         }
-                        if (petal == 12) {
+                        if (p_id == 12) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0 && mobToHit != mobToAttack) {
-                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             }
                         }
-                        totalPlayerDamage += petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
-                        data[user.id]["health"] += petalStats[petal].heal * (3 ** (data[user.id]["inventory"][petal] || 0))
+                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        data[user.id]["health"] += petalStats[p_id].heal * (3 ** (petal.split("_")[1] || 0))
                     }
                 }
                 if(data[user.id]["health"] > data[user.id]["max_health"]) {
@@ -615,23 +622,29 @@ client.on('interactionCreate', (interaction) => {
                 
                 if (data[user.id]["grind-info"].mobsLeft <= 0) {
                     let totalXP = 0;
-                    let petalDrops = {};
+                    let petalDrops = [];
 
                     // calc petal drops
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
                         const randomLootDropChance = Math.random() * 2;
-                        if(randomLootDropChance <= 1.0) {
+                        if(randomLootDropChance <= 2.0) {
                             const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
-                            const petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
+                            let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
+                            console.log("petalToDrop", petalToDrop);
                             if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
-                                petalDrops[petalToDrop] = grindRarity - 2;
+                                petalToDrop += "_" + (grindRarity - 2);
                             } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
-                                petalDrops[petalToDrop] = grindRarity - 1;
+                                petalToDrop += "_" + (grindRarity - 1);
                             } else {
-                                petalDrops[petalToDrop] = grindRarity;
+                                petalToDrop += "_" + grindRarity;
                             }
+                            if (petalToDrop.split("_")[1] < 0) {
+                               continue;
+                            }
+                            petalDrops.push(petalToDrop);
                         }
+                        petalDrops.push("5_5");
                     }
                     let gotRareLoot = Math.random() < 0.05;
                     if(gotRareLoot) {
@@ -640,15 +653,17 @@ client.on('interactionCreate', (interaction) => {
                     editXP(user.id, totalXP);
                     data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
                     let petalDropText = "\n**New petals dropped!**";
+                    console.log("petalDrops", petalDrops);
                     for(const pet in petalDrops) {
-                        if (petalDrops[pet] < 0) continue;
-                        if(data[user.id]["inventory"][pet] == null) {
-                            data[user.id]["inventory"][pet] = petalDrops[pet]
-                            petalDropText += `\n- ${petalRarities[petalDrops[pet]]} ${petalTypes[pet]}`;
-                        } else if(data[user.id]["inventory"][pet] < petalDrops[pet]) {
-                            data[user.id]["inventory"][pet] = petalDrops[pet]
-                            petalDropText += `\n- ${petalRarities[petalDrops[pet]]} ${petalTypes[pet]}`;
+                        let the_petal = petalDrops[pet];
+                        if (the_petal.split("_")[1] < 0) continue;
+                        // increase 
+                        if(data[user.id]["inventory"][the_petal] == undefined) {
+                            data[user.id]["inventory"][the_petal] = 1;
+                        } else {
+                            data[user.id]["inventory"][the_petal] += 1;
                         }
+                        petalDropText += `\n- ${getPetalRarity(the_petal)} ${getPetalType(the_petal)}`;
                     }
                     if(petalDropText == "\n**New petals dropped!**") petalDropText = "";
                     saveData();
