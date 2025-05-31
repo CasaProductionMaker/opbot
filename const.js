@@ -36,6 +36,7 @@ export const dropRarityChances = [
     [0.6, 0.9999] // 0.01% chance for super drop
 ]
 
+// Cost in stars for each level of talents, starting at 0.
 export const talentCosts = {
     "loadout": [0, 0, 100, 3000, 10000, 300000, 1000000],
     "evasion": [],
