@@ -29,5 +29,5 @@ export function fillInProfileBlanks(profile) {
     return profile;
 }
 export function getCraftCost(rarity) {
-    return Math.floor((20 * rarity ** 5) + 5)
+    return Math.floor((10 * rarity ** 2) + 5)
 }
