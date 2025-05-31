@@ -19,7 +19,8 @@ export const petalTypes = [
     "Rose",
     "Root",
     "Bur", // 15
-    "Stinger"
+    "Stinger",
+    "Golden Leaf"
 ]
 
 export const petalStats = [
@@ -146,5 +147,13 @@ export const petalStats = [
         heal: 0,
         max_health: 0,
         count: 2
+    },
+    {
+        name: "Golden Leaf",
+        description: "Makes you attack faster. Increases all damage.",
+        damage: 3,
+        heal: 0,
+        max_health: 0,
+        dmg_increase: 0.25
     }
 ]

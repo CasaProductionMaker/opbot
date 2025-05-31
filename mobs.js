@@ -46,10 +46,10 @@ export const biomes = {
             "Mantis",
             "Leafbug",
             // "Dark Ladybug",
-            "Wasp"
+            "Wasp",
             // "Soldier Termite",
             // "Firefly",
-            // "Bush"
+            "Bush"
         ]
     }
 }
@@ -186,7 +186,7 @@ export const mobStats = {
         loot: 3,
         petalDrop: 14,
         reroll: false,
-        armour: 0.5
+        armour: 0.75
     },
     "Dark Ladybug": {
         health: 4,
@@ -220,7 +220,7 @@ export const mobStats = {
         health: 10,
         damage: 0,
         loot: 2,
-        petalDrop: 0,
-        reroll: false
+        petalDrop: 17,
+        reroll: true
     }
 }

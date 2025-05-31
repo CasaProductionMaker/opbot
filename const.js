@@ -30,7 +30,7 @@ export const dropRarityChances = [
     [0.1, 0.8], 
     [0.05, 0.9], 
     [0.01, 0.95], 
-    [0.05, 0.97], 
+    [0.05, 0.97],
     [0.2, 0.99], 
     [0.8, 0.999], //0.1% chance for ultra drop
     [0.6, 0.9999] // 0.01% chance for super drop
