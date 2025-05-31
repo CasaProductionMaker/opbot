@@ -80,13 +80,12 @@ function petalToText(petal, inter, includeNumber = true) {
     }
 
     // get petal type
-
     let petalStrings = [];
     for (let i = 0; i < petalAmounts.length; i++) {
         if(petalAmounts[i] > 0) {
             let petalRarity = petalRarities[i];
             let petalDamageValue = getPetalDamage(petal, i);
-            petalStrings.push(`- - ${petalRarity} (${petalDamageValue} Damage): ${petalAmounts[i]}x`);
+            petalStrings.push(`  - ${petalRarity} (${petalDamageValue} Damage): ${petalAmounts[i]}x`);
         }
     }
 
@@ -658,7 +657,7 @@ client.on('interactionCreate', (interaction) => {
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
                         const randomLootDropChance = Math.random() * 2;
-                        if(randomLootDropChance <= 2.0) {
+                        if(randomLootDropChance <= 1.0) {
                             const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
                             let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
                             if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
@@ -681,17 +680,20 @@ client.on('interactionCreate', (interaction) => {
                     editXP(user.id, totalXP);
                     data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
                     let petalDropText = "\n**New petals dropped!**";
-                    // console.log("petalDrops", petalDrops);
+
+                    // Update player inventory
                     for(const pet in petalDrops) {
                         let the_petal = petalDrops[pet];
-                        if (the_petal.split("_")[1] < 0) continue;
-                        // increase 
-                        if(data[user.id]["inventory"][the_petal] == undefined) {
-                            data[user.id]["inventory"][the_petal] = 1;
-                        } else {
-                            data[user.id]["inventory"][the_petal] += 1;
+                        let petal_id = the_petal.split("_")[0];
+                        let petal_rarity = the_petal.split("_")[1];
+                        if (petal_rarity < 0) continue;
+                        
+                        if (!data[user.id]["inventory"][petal_id]) {
+                            data[user.id]["inventory"][petal_id] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
                         }
-                        petalDropText += `\n- ${getPetalRarity(the_petal)} ${getPetalType(the_petal)}`;
+
+                        data[user.id]["inventory"][petal_id][petal_rarity] += 1;
+                        petalDropText += `\n- ${getPetalRarity(petal_rarity)} ${getPetalType(petal_id)}`;
                     }
                     if(petalDropText == "\n**New petals dropped!**") petalDropText = "";
                     saveData();
