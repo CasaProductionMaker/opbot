@@ -760,7 +760,10 @@ client.on('interactionCreate', (interaction) => {
                         .setStyle(ButtonStyle.Success)
                 )
 
-                data[user.id]["health"] -= totalDamage - armour;
+                if(totalDamage > armour) {
+                    data[user.id]["health"] -= totalDamage - armour;
+                }
+                
                 saveData();
                 if (data[user.id]["health"] <= 0) {
                     delete data[user.id]["grind-info"];
