@@ -1,12 +1,18 @@
+const constants = require('./const')
+const petals = require('./petals')
+const mobs = require('./mobs')
+const util = require('./util')
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
 const dataFile = "saved_data.json";
 let data = {};
 
+// Get Discord js stuff
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
 const { deserialize } = require('v8');
 const { type } = require('os');
 
+// Create client obj
 const client = new Client({
     intents: [
         //GatewayIntentBits.Guilds,
@@ -17,578 +23,83 @@ const client = new Client({
         IntentsBitField.Flags.MessageContent, 
     ]
 })
-
-const petalRarities = [
-    "Common",
-    "Unusual",
-    "Rare",
-    "Epic",
-    "Legendary", 
-    "Mythic",
-    "Ultra", 
-    "Super",
-    "Unique"
-]
-const petalCraftChances = [
-    0.64,
-    0.32,
-    0.16,
-    0.08,
-    0.04, 
-    0.02,
-    0.01, 
-    1.0
-]
-const petalLowercaseRarities = [
-    "common",
-    "unusual",
-    "rare",
-    "epic",
-    "legendary", 
-    "mythic",
-    "ultra", 
-    "super",
-    "unique"
-]
-const dropRarityChances = [
-    [0, 0.75], 
-    [0.1, 0.8], 
-    [0.05, 0.9], 
-    [0.01, 0.95], 
-    [0.05, 0.97], 
-    [0.2, 0.99], 
-    [0.8, 0.999], //0.1% chance for ultra drop
-    [0.6, 0.9999] // 0.01% chance for super drop
-]
-const petalTypes = [
-    "Basic", // 0
-    "Peas", 
-    "Light", 
-    "Rock", 
-    "Leaf", 
-    "Wing", // 5
-    "Bone", 
-    "Starfish", 
-    "Missile", 
-    "Faster", 
-    "Cactus", // 10
-    "Lightning", 
-    "Glass", 
-    "Rose"
-]
-const petalStats = [
-    {
-        name: "Basic", 
-        description: "A basic petal, not too strong, not too weak.", 
-        damage: 2, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Peas", 
-        description: "4 in 1 deal.", 
-        damage: 3, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Light", 
-        description: "Fast reload, but low damage.", 
-        damage: 2, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Rock", 
-        description: "Very durable.", 
-        damage: 4, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Leaf", 
-        description: "Heals you, but does low damage.", 
-        damage: 2, 
-        heal: 2, 
-        max_health: 0
-    }, 
-    {
-        name: "Wing", 
-        description: "It hits hard.", 
-        damage: 4, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Bone", 
-        description: "Sturdy.", 
-        damage: 4, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Starfish", 
-        description: "Good heal, but low damage.", 
-        damage: 1, 
-        heal: 3, 
-        max_health: 0
-    }, 
-    {
-        name: "Missile", 
-        description: "Goes off in a random direction, so it can miss the target.", 
-        damage: 4, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Faster", 
-        description: "Makes your petals spin faster, giving them a chance to hit twice.", 
-        damage: 2, 
-        heal: 0, 
-        max_health: 0, 
-        rotation: 0.1
-    }, 
-    {
-        name: "Cactus", 
-        description: "Somehow increases your max health.", 
-        damage: 2, 
-        heal: 0, 
-        max_health: 10
-    }, 
-    {
-        name: "Lightning", 
-        description: "Chains off all the enemies, damaging all of them.", 
-        damage: 2, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Glass", 
-        description: "Can hit 0-2 enemies, stacking damage.", 
-        damage: 3, 
-        heal: 0, 
-        max_health: 0
-    }, 
-    {
-        name: "Rose", 
-        description: "Very weak for offence, but excellent for healing.", 
-        damage: 0, 
-        heal: 4, 
-        max_health: 0
-    }
-]
-
-const biomes = {
-    "garden": {
-        name: "Garden",
-        mobs: [
-            "Hornet",
-            "Bee",
-            "Rock", 
-            "Ladybug",
-            "Spider"
-        ]
-    }, 
-    "desert": {
-        name: "Desert",
-        mobs: [
-            "Scorpion",
-            "Cactus",
-            "Sandstorm", 
-            "Beetle"
-        ]
-    }, 
-    "ocean": {
-        name: "Ocean",
-        mobs: [
-            "Starfish",
-            "Jellyfish",
-            "Sponge", 
-            "Shell"
-        ]
-    }, 
-    "ant_hell": {
-        name: "Ant Hell",
-        mobs: [
-            "Soldier Ant",
-            "Worker Ant",
-            "Baby Ant", 
-            "Queen Ant"
-        ]
-    }
-}
-const mobStats = {
-    "Hornet": {
-        health: 7, 
-        damage: 3, 
-        loot: 4, 
-        petalDrop: 8, 
-        reroll: false
-    }, 
-    "Bee": {
-        health: 4, 
-        damage: 3, 
-        loot: 2, 
-        petalDrop: 0, 
-        reroll: false
-    }, 
-    "Rock": {
-        health: 10, 
-        damage: 0, 
-        loot: 1, 
-        petalDrop: 3, 
-        reroll: false
-    }, 
-    "Ladybug": {
-        health: 6, 
-        damage: 2, 
-        loot: 3, 
-        petalDrop: 13, 
-        reroll: false
-    }, 
-    "Spider": {
-        health: 8, 
-        damage: 3, 
-        loot: 5, 
-        petalDrop: 9, 
-        reroll: false
-    }, 
-    "Scorpion": {
-        health: 6, 
-        damage: 3, 
-        loot: 4, 
-        petalDrop: 0, 
-        reroll: false
-    },
-    "Cactus": {
-        health: 10, 
-        damage: 3, 
-        loot: 2, 
-        petalDrop: 10, 
-        reroll: false
-    },
-    "Sandstorm": {
-        health: 10, 
-        damage: 4, 
-        loot: 5, 
-        petalDrop: 12, 
-        reroll: false
-    },
-    "Beetle": {
-        health: 6, 
-        damage: 3, 
-        loot: 4, 
-        petalDrop: 0, 
-        reroll: false
-    },
-    "Starfish": {
-        health: 7, 
-        damage: 3, 
-        loot: 3, 
-        petalDrop: 7, 
-        reroll: false
-    },
-    "Jellyfish": {
-        health: 6, 
-        damage: 3, 
-        loot: 4, 
-        petalDrop: 11, 
-        reroll: false
-    },
-    "Sponge": {
-        health: 5, 
-        damage: 1, 
-        loot: 1, 
-        petalDrop: 0, 
-        reroll: false
-    },
-    "Shell": {
-        health: 5, 
-        damage: 2, 
-        loot: 2, 
-        petalDrop: 0, 
-        reroll: false
-    },
-    "Soldier Ant": {
-        health: 8, 
-        damage: 1, 
-        loot: 3, 
-        petalDrop: 6, 
-        reroll: false
-    },
-    "Worker Ant": {
-        health: 6, 
-        damage: 1, 
-        loot: 2, 
-        petalDrop: 4, 
-        reroll: false
-    },
-    "Baby Ant": {
-        health: 4, 
-        damage: 1, 
-        loot: 1, 
-        petalDrop: 2, 
-        reroll: false
-    },
-    "Queen Ant": {
-        health: 10, 
-        damage: 2, 
-        loot: 4, 
-        petalDrop: 5, 
-        reroll: true
-    }
-}
-
-const commands = [
-    {
-        name: "xp_edit", 
-        description: "Add or remove XP from a user (Admin only)",
-        options: [
-            {
-                name: "user", 
-                description: "The user to edit xp of.",
-                type: ApplicationCommandOptionType.User,
-                required: true
-            }, 
-            {
-                name: "amount", 
-                description: "The amount of xp to add or substract.",
-                type: ApplicationCommandOptionType.Number,
-                required: true
-            }
-        ]
-    },
-    {
-        name: "stars_edit", 
-        description: "Add or remove stars from a user (Admin only)",
-        options: [
-            {
-                name: "user", 
-                description: "The user to edit stars of.",
-                type: ApplicationCommandOptionType.User,
-                required: true
-            }, 
-            {
-                name: "amount", 
-                description: "The amount of stars to add or substract.",
-                type: ApplicationCommandOptionType.Number,
-                required: true
-            }
-        ]
-    }, 
-    {
-        name: "craft_petal", 
-        description: "Craft your petal for stars. This has a chance to fail which increases the higher the rarity."
-    }, 
-    {
-        name: "grind", 
-        description: "Grind a biome for mobs to get XP and stars.", 
-        options: [
-            {
-                name: "biome", 
-                description: "The biome to grind in.",
-                type: ApplicationCommandOptionType.String,
-                required: true,
-                choices: [
-                    {
-                        name: "Ant Hell",
-                        value: "ant_hell"
-                    }, 
-                    {
-                        name: "Garden",
-                        value: "garden"
-                    }, 
-                    {
-                        name: "Ocean",
-                        value: "ocean"
-                    }, 
-                    {
-                        name: "Desert",
-                        value: "desert"
-                    }
-                ]
-            }
-        ]
-    }, 
-    {
-        name: "profile", 
-        description: "Get a user's profile information.",
-        options: [
-            {
-                name: "user", 
-                description: "The user to get profile of. If not provided, it will get your profile.",
-                type: ApplicationCommandOptionType.User
-            }
-        ]
-    }, 
-    {
-        name: "respawn", 
-        description: "Respawn your character to full health every 5 mins. If spend option is 'yes' you can use 50 stars.", 
-        options: [
-            {
-                name: "spend", 
-                description: "Whether or not to spend stars to respawn.",
-                type: ApplicationCommandOptionType.String
-            }
-        ]
-    }, 
-    {
-        name: "help", 
-        description: "Get a list of all bot commands."
-    }, 
-    {
-        name: "spawn_super", 
-        description: "Spawn a Super mob (Admin only)", 
-        options: [
-            {
-                name: "mob", 
-                description: "The mob to spawn.",
-                type: ApplicationCommandOptionType.String,
-                required: true
-            }
-        ]
-    }, 
-    {
-        name: "edit_slot", 
-        description: "Change which petal is in a loadout slot.", 
-        options: [
-            {
-                name: "slot", 
-                description: "Slot to edit.", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true, 
-                choices: [
-                    {
-                        name: "Slot 1", 
-                        value: 0
-                    }, 
-                    {
-                        name: "Slot 2", 
-                        value: 1
-                    }, 
-                    {
-                        name: "Slot 3", 
-                        value: 2
-                    }
-                ]
-            }
-        ]
-    }, 
-    {
-        name: "submit_idea", 
-        description: "Submit an idea for the bot.", 
-        options: [
-            {
-                name: "idea", 
-                description: "The idea in question.", 
-                type: ApplicationCommandOptionType.String, 
-                required: true
-            }
-        ]
-    }, 
-    {
-        name: "add_petal", 
-        description: "Add a petal to a user (Admin only)", 
-        options: [
-            {
-                name: "user", 
-                description: "The user to add a petal to", 
-                type: ApplicationCommandOptionType.User, 
-                required: true
-            }, 
-            {
-                name: "petal", 
-                description: "The petal to add", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true
-            }, 
-            {
-                name: "rarity", 
-                description: "The rarity of the petal", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true
-            }
-        ]
-    }, 
-    {
-        name: "remove_petal", 
-        description: "Remove a petal from a user (Admin only)", 
-        options: [
-            {
-                name: "user", 
-                description: "The user to remove a petal from", 
-                type: ApplicationCommandOptionType.User, 
-                required: true
-            }, 
-            {
-                name: "petal", 
-                description: "The petal to remove", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true
-            }
-        ]
-    }, 
-    {
-        name: "petal_stats", 
-        description: "Get the stats for a petal.", 
-        options: [
-            {
-                name: "petal", 
-                description: "The petal to get stats of.", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true, 
-                choices: petalTypes.map(( type, index ) => ({ name: type, value: index}))
-            }, 
-            {
-                name: "rarity", 
-                description: "Petal rarity.", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true, 
-                choices: [
-                    {
-                        name: "Common", 
-                        value: 0
-                    }, 
-                    {
-                        name: "Unusual", 
-                        value: 1
-                    }, 
-                    {
-                        name: "Rare", 
-                        value: 2
-                    }, 
-                    {
-                        name: "Epic", 
-                        value: 3
-                    }, 
-                    {
-                        name: "Legendary", 
-                        value: 4
-                    }, 
-                    {
-                        name: "Mythic", 
-                        value: 5
-                    }, 
-                    {
-                        name: "Ultra", 
-                        value: 6
-                    }, 
-                    {
-                        name: "Super", 
-                        value: 7
-                    }, 
-                    {
-                        name: "Unique", 
-                        value: 8
-                    }
-                ]
-            }
-        ]
-    }
-];
-
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
+// Load game constants
+const petalRarities = constants.petalRarities
+const petalCraftChances =  constants.petalCraftChances;
+const petalLowercaseRarities = petalRarities.map(s => s.toLowerCase());
+const dropRarityChances = constants.dropRarityChances;
+const petalTypes = petals.petalTypes;
+const petalStats = petals.petalStats;
+const biomes = mobs.biomes;
+const mobStats = mobs.mobStats;
+const commands = require('./commands').commands;
+
+// functions
+function editXP(user, value) {
+    let xp = data[user]["xp"] || 0;
+    data[user]["xp"] = xp + value;
+    saveData();
+}
+
+function saveData() {
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 4));
+}
+
+// Gets the petal type from a petal string. Petal string is
+// "n_m" where n is the id and m is the rarity
+function getPetalType(petal) {
+    return petalTypes[petal];
+}
+
+// Gets the petal rarity
+function getPetalRarity(petal) {
+    return petalRarities[petal];
+}
+
+// Gets the petal dmg
+function getPetalDamage(petal, rarity) {
+    return petalStats[petal].damage * (3 ** rarity);
+}
+
+// Returns a string of the petal, like "Common Light (2 Damage): 5x"
+function petalToText(petal, inter, includeNumber = true) {
+    let petalAmounts = data[inter.user.id].inventory[petal];
+    
+    // check if user has any of the petal
+    let hasPetal = false;
+    for (let i = 0; i < petalAmounts.length; i++) {
+        if (petalAmounts[i] > 0) {
+            hasPetal = true;
+            break;
+        }
+    }
+    if (!hasPetal) {
+        return "";
+    }
+
+    // get petal type
+    let petalStrings = [];
+    for (let i = 0; i < petalAmounts.length; i++) {
+        if(petalAmounts[i] > 0) {
+            let petalRarity = petalRarities[i];
+            let petalDamageValue = getPetalDamage(petal, i);
+            petalStrings.push(`  - ${petalRarity} (${petalDamageValue} Damage): ${petalAmounts[i]}x`);
+        }
+    }
+
+    return "- " + petalTypes[petal] + "\n" + petalStrings.join("\n") + "\n";
+}
+
+function singlePetalToText(petal, inter) {
+    let petalRarity = getPetalRarity(petal.split("_")[1]);
+    let petalType = petalTypes[petal.split("_")[0]];
+    let petalDamageValue = getPetalDamage(petal.split("_")[0], petal.split("_")[1]);
+    return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)\n`;
+}
+
+// Load data
 if(fs.existsSync(dataFile)) {
     data = JSON.parse(fs.readFileSync(dataFile));
     console.log("Loaded saved data.");
@@ -607,36 +118,6 @@ if(fs.existsSync(dataFile)) {
     }
 })();
 
-function editXP(user, value) {
-    let xp = data[user]["xp"] || 0;
-    data[user]["xp"] = xp + value;
-    saveData();
-}
-function saveData() {
-    fs.writeFileSync(dataFile, JSON.stringify(data, null, 4));
-}
-function getCurrentTime() {
-    let date = new Date();
-    return date.getTime();
-}
-function fillInProfileBlanks(profile) {
-    if (!profile.xp) profile.xp = 0;
-    profile.level = Math.floor(Math.sqrt(profile.xp) * 0.6);
-    if (!profile.stars) profile.stars = 0;
-    if (!profile.inventory) profile.inventory = {0: 0};
-    if (!profile.loadout) profile.loadout = [0, -1, -1];
-    if (!profile.health) profile.health = 30;
-    let totalMH = 0;
-    for(let i = 0; i < 3; i++) {
-        if(profile.loadout[i] < 0) continue;
-        totalMH += petalStats[profile.loadout[i]].max_health * (3 ** profile.inventory[profile.loadout[i]]);
-    }
-    profile.max_health = Math.floor(Math.sqrt(5 * profile.xp) + 30) + totalMH;
-    return profile;
-}
-function getCraftCost(rarity) {
-    return Math.floor((20 * rarity ** 5) + 5)
-}
 
 client.on("ready", (c) => {
 	console.log(`Logged in as ${c.user.tag}!`)
@@ -679,7 +160,7 @@ client.on('interactionCreate', (interaction) => {
         }
         const user = interaction.options.get('user');
         const amount = interaction.options.get('amount');
-        data[user.user.id] = fillInProfileBlanks(data[user.user.id] || {});
+        data[user.user.id] = util.fillInProfileBlanks(data[user.user.id] || {});
         editXP(user.user.id, amount.value);
         interaction.reply(`Added ${amount.value} XP to ${user.user.username}. Total XP: ${data[user.user.id]["xp"]}`);
     }
@@ -690,14 +171,14 @@ client.on('interactionCreate', (interaction) => {
         }
         const user = interaction.options.get('user');
         const amount = interaction.options.get('amount');
-        data[user.user.id] = fillInProfileBlanks(data[user.user.id] || {});
+        data[user.user.id] = util.fillInProfileBlanks(data[user.user.id] || {});
         data[user.user.id]["stars"] += amount.value;
         saveData();
         interaction.reply(`Added ${amount.value} stars to ${user.user.username}. Total stars: ${data[user.user.id]["stars"]}`);
     }
     if (interaction.commandName === 'craft_petal') {
         const user = interaction.user;
-        data[user.id] = fillInProfileBlanks(data[user.id] || {});
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
         let rows = [];
         let petalsSoFar = 0;
@@ -708,7 +189,7 @@ client.on('interactionCreate', (interaction) => {
             rows[rows.length - 1].addComponents(
                 new ButtonBuilder()
                     .setCustomId(`craft-${petal}`)
-                    .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                    .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                     .setStyle(ButtonStyle.Primary)
             );
             petalsSoFar++;
@@ -785,36 +266,37 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         });
     }
-    if (interaction.commandName === 'profile') {
+    if (interaction.commandName === 'profile') { // Profile command
         const inter = interaction.options.get('user') || interaction;
-        data[inter.user.id] = fillInProfileBlanks(data[inter.user.id] || {});
+        data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
+        
+        // print general stats
         let xp = data[inter.user.id].xp;
         let stars = data[inter.user.id].stars;
         let level = data[inter.user.id].level;
         let maxHealth = data[inter.user.id].max_health;
         let health = data[inter.user.id].health != null ? data[inter.user.id].health : maxHealth;
         let inventoryText = "";
+
+        // print inventory
         for (const petal in data[inter.user.id].inventory) {
-            let rarity = data[inter.user.id].inventory[petal];
-            let petalType = petalTypes[petal];
-            let petalRarity = petalRarities[rarity];
-            let petalDamageValue = petalStats[petal].damage * (3 ** rarity);
-            inventoryText += `- ${petalRarity} ${petalType}: ${petalDamageValue} Damage\n`;
+            console.log(petal)
+            inventoryText += petalToText(petal, inter);
         }
+
+        // print loadout
         let loadoutText = "";
         for (const i in data[inter.user.id].loadout) {
             const petal = data[inter.user.id].loadout[i];
-            if (petal < 0) {
+            if (petal.split("_")[0] == "-1") {
                 loadoutText += `- Empty Slot!\n`;
                 continue;
             }
-            let rarity = data[inter.user.id].inventory[petal];
-            let petalType = petalTypes[petal];
-            let petalRarity = petalRarities[rarity];
-            let petalDamageValue = petalStats[petal].damage * (3 ** rarity);
-            loadoutText += `- ${petalRarity} ${petalType}: ${petalDamageValue} Damage\n`;
+            loadoutText += singlePetalToText(petal, inter);
         }
+
+        // print final text
         let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}`;
         interaction.reply({
             content: finalText
@@ -822,7 +304,7 @@ client.on('interactionCreate', (interaction) => {
     }
     if (interaction.commandName === 'respawn') {
         const user = interaction.user;
-        data[user.id] = fillInProfileBlanks(data[user.id] || {})
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
         if(data[user.id]["health"] > 0) {
             interaction.reply("You are not dead! You cannot respawn.");
             return;
@@ -832,12 +314,12 @@ client.on('interactionCreate', (interaction) => {
         }
 
         let maxHealth = data[user.id]["max_health"];
-        if (getCurrentTime() - data[user.id].lastRespawn < 300000) {
+        if (util.getCurrentTime() - data[user.id].lastRespawn < 300000) {
             if(data[user.id]["stars"] < 50) {
-                interaction.reply(`You are on cooldown! You can respawn in ${Math.ceil(5 - ((getCurrentTime() - data[user.id].lastRespawn) / 60000))} minutes or once you have 50 stars.`);
+                interaction.reply(`You are on cooldown! You can respawn in ${Math.ceil(5 - ((util.getCurrentTime() - data[user.id].lastRespawn) / 60000))} minutes or once you have 50 stars.`);
                 return;
             }
-            data[user.id].lastRespawn = getCurrentTime();
+            data[user.id].lastRespawn = util.getCurrentTime();
             data[user.id].health = maxHealth;
             data[user.id]["stars"] -= 50;
             if(data["super-mob"] && data["super-mob"].damagers[user.id]) {
@@ -847,7 +329,7 @@ client.on('interactionCreate', (interaction) => {
             interaction.reply("You have respawned! You have lost 50 stars.");
             return;
         } else {
-            data[user.id].lastRespawn = getCurrentTime();
+            data[user.id].lastRespawn = util.getCurrentTime();
             data[user.id].health = maxHealth;
             if(data["super-mob"] && data["super-mob"].damagers[user.id]) {
                 data["super-mob"].damagers[user.id] = 0;
@@ -860,20 +342,21 @@ client.on('interactionCreate', (interaction) => {
         const user = interaction.user;
         const slot = interaction.options.get("slot").value;
         
-        data[user.id] = fillInProfileBlanks(data[user.id] || {});
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
         let rows = [];
         let petalsSoFar = 0;
         for (const petal in data[user.id]["inventory"]) {
+            console.log("Petal", petal);
             if(petalsSoFar % 5 == 0) {
                 rows.push(new ActionRowBuilder());
             }
             let style = ButtonStyle.Primary;
-            let text = `${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]}`;
+            let text = `${getPetalRarity(petal)} ${getPetalType(petal)}`;
             let dis = false;
-            if(data[user.id]["loadout"].indexOf(parseInt(petal)) >= 0) {
+            if(data[user.id]["loadout"].indexOf(petal) >= 0) {
                 dis = true;
-                if(data[user.id]["loadout"].indexOf(parseInt(petal)) == slot) {
+                if(data[user.id]["loadout"].indexOf(petal) == slot) {
                     style = ButtonStyle.Success;
                     text += ` already in slot ${slot+1}!`;
                 } else {
@@ -960,7 +443,7 @@ client.on('interactionCreate', (interaction) => {
         const user = interaction.options.get("user").user;
         const petal = interaction.options.get("petal").value;
         const rarity = interaction.options.get("rarity").value;
-        data[user.id] = fillInProfileBlanks(data[user.id] || {})
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
         data[user.id]["inventory"][petal] = rarity;
         saveData();
@@ -974,7 +457,7 @@ client.on('interactionCreate', (interaction) => {
         }
         const user = interaction.options.get("user").user;
         const petal = interaction.options.get("petal").value;
-        data[user.id] = fillInProfileBlanks(data[user.id] || {})
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
         if(data[user.id]["inventory"][petal] != null) {
             delete data[user.id]["inventory"][petal]
@@ -1011,7 +494,7 @@ client.on('interactionCreate', (interaction) => {
         // super mobs to fix
         if (interaction.customId === "super-mob") {
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {})
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
             if(data[user.id]["health"] <= 0) {
                 interaction.reply({content: "You are dead! Use /respawn to respawn.", flags: MessageFlags.Ephemeral});
                 return;
@@ -1065,7 +548,7 @@ client.on('interactionCreate', (interaction) => {
             })
         } else if (Number.isInteger(parseInt(interaction.customId))) {
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {});
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             let mobToAttack = interaction.customId;
 
             if(!data[user.id]["grind-info"]) {
@@ -1086,31 +569,32 @@ client.on('interactionCreate', (interaction) => {
                 }
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
-                        if (petal == -1) continue; // Skip if petal is -1
-                        if (petal == 8) {
+                        p_id = petal.split("_")[0];
+                        if (p_id == -1) continue; // Skip if petal is -1
+                        if (p_id == 8) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0) {
-                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             } else {
                                 extraInfo += "\nYour Missile missed!"
                             }
                             continue;
                         }
-                        if (petal == 11) {
+                        if (p_id == 11) {
                             for (let mobID = 0; mobID < data[user.id]["grind-info"].mobs.length; mobID++)
                             if(data[user.id]["grind-info"].mobs[mobID].health > 0) {
-                                data[user.id]["grind-info"].mobs[mobID].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             }
                             continue;
                         }
-                        if (petal == 12) {
+                        if (p_id == 12) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0 && mobToHit != mobToAttack) {
-                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
+                                data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             }
                         }
-                        totalPlayerDamage += petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
-                        data[user.id]["health"] += petalStats[petal].heal * (3 ** (data[user.id]["inventory"][petal] || 0))
+                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        data[user.id]["health"] += petalStats[p_id].heal * (3 ** (petal.split("_")[1] || 0))
                     }
                 }
                 if(data[user.id]["health"] > data[user.id]["max_health"]) {
@@ -1167,20 +651,26 @@ client.on('interactionCreate', (interaction) => {
                 
                 if (data[user.id]["grind-info"].mobsLeft <= 0) {
                     let totalXP = 0;
-                    let petalDrops = {};
+                    let petalDrops = [];
+
+                    // calc petal drops
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
                         const randomLootDropChance = Math.random() * 2;
                         if(randomLootDropChance <= 1.0) {
                             const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
-                            const petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
+                            let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
                             if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
-                                petalDrops[petalToDrop] = grindRarity - 2;
+                                petalToDrop += "_" + (grindRarity - 2);
                             } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
-                                petalDrops[petalToDrop] = grindRarity - 1;
+                                petalToDrop += "_" + (grindRarity - 1);
                             } else {
-                                petalDrops[petalToDrop] = grindRarity;
+                                petalToDrop += "_" + grindRarity;
                             }
+                            if (petalToDrop.split("_")[1] < 0) {
+                               continue;
+                            }
+                            petalDrops.push(petalToDrop);
                         }
                     }
                     let gotRareLoot = Math.random() < 0.05;
@@ -1190,15 +680,20 @@ client.on('interactionCreate', (interaction) => {
                     editXP(user.id, totalXP);
                     data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
                     let petalDropText = "\n**New petals dropped!**";
+
+                    // Update player inventory
                     for(const pet in petalDrops) {
-                        if (petalDrops[pet] < 0) continue;
-                        if(data[user.id]["inventory"][pet] == null) {
-                            data[user.id]["inventory"][pet] = petalDrops[pet]
-                            petalDropText += `\n- ${petalRarities[petalDrops[pet]]} ${petalTypes[pet]}`;
-                        } else if(data[user.id]["inventory"][pet] < petalDrops[pet]) {
-                            data[user.id]["inventory"][pet] = petalDrops[pet]
-                            petalDropText += `\n- ${petalRarities[petalDrops[pet]]} ${petalTypes[pet]}`;
+                        let the_petal = petalDrops[pet];
+                        let petal_id = the_petal.split("_")[0];
+                        let petal_rarity = the_petal.split("_")[1];
+                        if (petal_rarity < 0) continue;
+                        
+                        if (!data[user.id]["inventory"][petal_id]) {
+                            data[user.id]["inventory"][petal_id] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
                         }
+
+                        data[user.id]["inventory"][petal_id][petal_rarity] += 1;
+                        petalDropText += `\n- ${getPetalRarity(petal_rarity)} ${getPetalType(petal_id)}`;
                     }
                     if(petalDropText == "\n**New petals dropped!**") petalDropText = "";
                     saveData();
@@ -1254,7 +749,7 @@ client.on('interactionCreate', (interaction) => {
             const biome = data[interaction.user.id]["grind-info"].biome;
             const rarity = data[interaction.user.id]["grind-info"].rarity;
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {});
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             if(data[user.id]["health"] <= 0) {
                 interaction.reply("You are dead! You cannot grind.");
                 return;
@@ -1316,7 +811,7 @@ client.on('interactionCreate', (interaction) => {
             const biome = data[interaction.user.id]["grind-info"].biome;
             const rarity = petalLowercaseRarities[petalLowercaseRarities.indexOf(data[interaction.user.id]["grind-info"].rarity) + 1];
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {});
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             if(data[user.id]["health"] <= 0) {
                 interaction.reply("You are dead! You cannot grind.");
                 return;
@@ -1375,15 +870,15 @@ client.on('interactionCreate', (interaction) => {
             });
         } else if (interaction.customId.includes("craft-")) {
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {});
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             const petalType = interaction.customId.split("-")[1];
-            const currentPetalRarity = data[user.id]["inventory"][petalType];
+            const currentPetalRarity = petalType.split("_")[1];
 
             if(currentPetalRarity >= petalRarities.length - 1) {
                 interaction.reply("You have already reached the max rarity.");
                 return;
             }
-            let reqirement = getCraftCost(currentPetalRarity);
+            let reqirement = util.getCraftCost(currentPetalRarity);
             if(data[user.id]["stars"] < reqirement) {
                 interaction.reply("You need at least " + reqirement + " stars to attempt to craft a petal.");
                 return;
@@ -1392,7 +887,8 @@ client.on('interactionCreate', (interaction) => {
             data[user.id]["stars"] -= reqirement;
             saveData();
 
-            if (Math.random() > petalCraftChances[currentPetalRarity]) { // failed craft
+            console.log(petalCraftChances[currentPetalRarity]);
+            if (Math.random() > petalCraftChances[currentPetalRarity]+1) { // failed craft
                 let rows = [];
                 let petalsSoFar = 0;
                 for (const petal in data[user.id]["inventory"]) {
@@ -1402,7 +898,7 @@ client.on('interactionCreate', (interaction) => {
                     rows[rows.length - 1].addComponents(
                         new ButtonBuilder()
                             .setCustomId(`craft-${petal}`)
-                            .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                            .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                             .setStyle(ButtonStyle.Primary)
                     );
                     petalsSoFar++;
@@ -1415,7 +911,25 @@ client.on('interactionCreate', (interaction) => {
                 return;
             }
 
-            data[user.id]["inventory"][petalType] += 1; // success
+            data[user.id]["inventory"][petalType] -= 1; // success
+            let newPetalType = petalType.split("_")[0] + "_" + (parseInt(currentPetalRarity) + 1);
+
+            // remove 1 of prev rarity
+            if(data[user.id]["inventory"][petalType] <= 0) {
+                delete data[user.id]["inventory"][petalType];
+
+                let loadoutIndex = data[user.id]["loadout"].indexOf(petalType)
+                if(loadoutIndex > -1) {
+                    data[user.id]["loadout"][loadoutIndex] = newPetalType;
+                }
+            }
+
+            if(data[user.id]["inventory"][newPetalType]) {
+                data[user.id]["inventory"][newPetalType] += 1;
+            } else {
+                data[user.id]["inventory"][newPetalType] = 1;
+            }
+            saveData();
             let rows = [];
             let petalsSoFar = 0;
             for (const petal in data[user.id]["inventory"]) {
@@ -1425,22 +939,23 @@ client.on('interactionCreate', (interaction) => {
                 rows[rows.length - 1].addComponents(
                     new ButtonBuilder()
                         .setCustomId(`craft-${petal}`)
-                        .setLabel(`${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]} (${getCraftCost(data[user.id]["inventory"][petal])} stars)`)
+                        .setLabel(`${getPetalRarity(petal)} ${getPetalType(petal)} (${util.getCraftCost(petal.split("_")[1])} stars)`)
                         .setStyle(ButtonStyle.Primary)
                 );
                 petalsSoFar++;
             }
+            console.log("currentPetalRarity", parseInt(currentPetalRarity)+1)
             interaction.update({
-                content: `Crafted your petal to a ${petalRarities[currentPetalRarity + 1]} for ${reqirement} stars!\nSelect a petal to craft.\nYour stars: ${data[user.id].stars}`, 
+                content: `Crafted your petal to a ${petalRarities[parseInt(currentPetalRarity) + 1]} for ${reqirement} stars!\nSelect a petal to craft.\nYour stars: ${data[user.id].stars}`, 
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
         } else if (interaction.customId.includes("editslot-")) {
             const user = interaction.user;
-            data[user.id] = fillInProfileBlanks(data[user.id] || {});
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             const slotID = interaction.customId.split("-")[1];
             const petalToSlotIn = interaction.customId.split("-")[2];
-            data[user.id]["loadout"][slotID] = parseInt(petalToSlotIn);
+            data[user.id]["loadout"][slotID] = petalToSlotIn;
             saveData();
 
             let rows = [];
@@ -1450,11 +965,11 @@ client.on('interactionCreate', (interaction) => {
                     rows.push(new ActionRowBuilder());
                 }
                 let style = ButtonStyle.Primary;
-                let text = `${petalRarities[data[user.id]["inventory"][petal]]} ${petalTypes[petal]}`;
+                let text = `${getPetalRarity(petal)} ${getPetalType(petal)}`;
                 let dis = false;
-                if(data[user.id]["loadout"].indexOf(parseInt(petal)) >= 0) {
+                if(data[user.id]["loadout"].indexOf(petal) >= 0) {
                     dis = true;
-                    if(data[user.id]["loadout"].indexOf(parseInt(petal)) == parseInt(slotID)) {
+                    if(data[user.id]["loadout"].indexOf(petal) == parseInt(slotID)) {
                         style = ButtonStyle.Success;
                         text += ` already in slot ${parseInt(slotID)+1}!`;
                     } else {
