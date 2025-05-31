@@ -15,7 +15,7 @@ export function fillInProfileBlanks(profile) {
     profile.level = Math.floor(Math.sqrt(profile.xp) * 0.6);
     if (!profile.stars) profile.stars = 0;
     if (!profile.inventory) profile.inventory = {"0": [0, 0, 0, 0, 0, 0, 0, 0, 0]};
-    if (!profile.loadout) profile.loadout = [0, -1, -1];
+    if (!profile.loadout) profile.loadout = ["0_0", "-1_0", "-1_0"];
     if (!profile.health) profile.health = 30;
     let totalMH = 0;
     for(let i = 0; i < 3; i++) {
