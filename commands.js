@@ -8,6 +8,10 @@ import { biomes } from './mobs.js';
 
 export const commands = [
     {
+        name: "upgrade_talents", 
+        description: "Upgrade your talents for more damage and health."
+    },
+    {
         name: "xp_edit", 
         description: "Add or remove XP from a user (Admin only)",
         options: [

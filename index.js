@@ -301,6 +301,51 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
+
+    // Upgrade talents command
+    if (interaction.commandName === 'upgrade_talents') {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        
+        let finalText = `**Current talents**\n*Loadout:* Level ${data[user.id]["talents"]["loadout"]}\n*Evasion:* Level ${data[user.id]["talents"]["evasion"]}\n*Max HP:* Level ${data[user.id]["talents"]["max_hp"]}\n\nSelect a talent to upgrade:`;
+
+        let row = new ActionRowBuilder();
+
+        // Build buttons
+        for (const talent of Object.keys(constants.talentCosts)) {
+            let talentCost = constants.talentCosts[talent][data[user.id]["talents"][talent]];
+            let buttonStyle = ButtonStyle.Primary;
+            if(data[user.id]["stars"] < talentCost) {
+                buttonStyle = ButtonStyle.Danger;
+            }
+            
+            if(data[user.id]["talents"][talent] == constants.talentCosts[talent].length) {
+                row.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(talent)
+                        .setLabel(`${talent} (MAX)`)
+                        .setStyle(ButtonStyle.Success)
+                        .setDisabled(true)
+                );
+            } else {
+                row.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(talent)
+                        .setLabel(`${talent} (${talentCost} stars)`)
+                        .setStyle(buttonStyle)
+                        .setDisabled(data[user.id]["stars"] < talentCost)
+                );
+
+            }
+        }
+
+        interaction.reply({
+            content: finalText, 
+            components: [row], 
+            flags: MessageFlags.Ephemeral
+        })
+    }
+
     if (interaction.commandName === 'grind') {
         const biome = interaction.options.get('biome');
         const rarity = "common";
@@ -620,9 +665,9 @@ client.on('interactionCreate', (interaction) => {
                 if (bubbleRarity - grindRarity > 3) {
                     skipChance = 1 
                 } else if (bubbleRarity - grindRarity > 0) {
-                    skipChance = 1 - 4 ** (- bubbleRarity + grindRarity);
-                    // around 67% chance to skip 1 rarity below. per hit
-                    // around 88% chance to skip 2 rarities below
+                    skipChance = 1 - 2.5 ** (- bubbleRarity + grindRarity);
+                    // around 60% chance to skip 1 rarity below. per hit
+                    // around 84% chance to skip 2 rarities below
                     // around 96% chance to skip 3 rarities below
                 }
                
@@ -763,7 +808,7 @@ client.on('interactionCreate', (interaction) => {
                 if(totalDamage > armour) {
                     data[user.id]["health"] -= totalDamage - armour;
                 }
-                
+
                 saveData();
                 if (data[user.id]["health"] <= 0) {
                     delete data[user.id]["grind-info"];
@@ -780,55 +825,63 @@ client.on('interactionCreate', (interaction) => {
                     let totalXP = 0;
                     let petalDrops = [];
 
+                    let gotRareLoot = Math.random() < 0.05;
+
                     // calc petal drops
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
-                        const randomLootDropChance = Math.random() * 2;
-                        if(randomLootDropChance <= 1.0) {
-                            const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
-                            let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
-                            console.log("petalToDrop: " + petalToDrop);
-                            console.log("grindRarity: " + grindRarity);
 
-                            if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
-                                petalToDrop += "_" + (grindRarity - 2);
-                            } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
-                                petalToDrop += "_" + (grindRarity - 1);
-                            } else {
-                                petalToDrop += "_" + grindRarity;
-                            }
-                            if (petalToDrop.split("_")[1] < 0) { // filter "below common" rarities
-                               continue;
-                            }
+                        let petalRolls = 1;
+                        if(gotRareLoot) {
+                            petalRolls = 4;
+                        }
+                        for(let b = 0; b < petalRolls; b++) {
+                            const randomLootDropChance = Math.random() * 2;
+                            if(randomLootDropChance <= 1.0) {
+                                const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
+                                let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
+                                // console.log("petalToDrop: " + petalToDrop);
+                                // console.log("grindRarity: " + grindRarity);
 
-                            // golden leaf overrides petal drop
-                            if(petalToDrop.split("_")[0] == "17") {
-                                if(grindRarity < 4) continue;
-                                // console.log("drop chance -2", (1-dropRarityChances[grindRarity-2][1]));
-                                // console.log("drop chance -1", (1-dropRarityChances[grindRarity-1][1])/2);
-                                // console.log("drop chance same", (1-dropRarityChances[grindRarity][1])/3);
-                                // console.log("randomLootDropChance: " + randomLootDropChance);
-                                if(randomLootDropChance < (1-dropRarityChances[grindRarity-2][1])) {
-                                    // For -2 rarity, it's the chance of that rarity dropping same rarity petal
-                                    petalToDrop = "17_" + (grindRarity-2);
-                                    petalDrops.push(petalToDrop);
-                                } else if (randomLootDropChance < (1-dropRarityChances[grindRarity-1][1])/2) {
-                                    // For -1 rarity, it's the chance of that rarity dropping same rarity petal divided by 2
-                                    petalToDrop = "17_" + (grindRarity-1);
-                                    petalDrops.push(petalToDrop);
-                                } else if (randomLootDropChance < (1-dropRarityChances[grindRarity][1])/3) {
-                                    // For same rarity, it's the chance of same rarity drop divided by 3
-                                    petalToDrop = "17_" + grindRarity;
-                                    petalDrops.push(petalToDrop);
+                                if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
+                                    petalToDrop += "_" + (grindRarity - 2);
+                                } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
+                                    petalToDrop += "_" + (grindRarity - 1);
                                 } else {
-                                    continue;
+                                    petalToDrop += "_" + grindRarity;
                                 }
-                            }
+                                if (petalToDrop.split("_")[1] < 0) { // filter "below common" rarities
+                                continue;
+                                }
 
-                            petalDrops.push(petalToDrop);
+                                // golden leaf overrides petal drop
+                                if(petalToDrop.split("_")[0] == "17") {
+                                    if(grindRarity < 4) continue;
+                                    // console.log("drop chance -2", (1-dropRarityChances[grindRarity-2][1]));
+                                    // console.log("drop chance -1", (1-dropRarityChances[grindRarity-1][1])/2);
+                                    // console.log("drop chance same", (1-dropRarityChances[grindRarity][1])/3);
+                                    // console.log("randomLootDropChance: " + randomLootDropChance);
+                                    if(randomLootDropChance < (1-dropRarityChances[grindRarity-2][1])) {
+                                        // For -2 rarity, it's the chance of that rarity dropping same rarity petal
+                                        petalToDrop = "17_" + (grindRarity-2);
+                                        petalDrops.push(petalToDrop);
+                                    } else if (randomLootDropChance < (1-dropRarityChances[grindRarity-1][1])/2) {
+                                        // For -1 rarity, it's the chance of that rarity dropping same rarity petal divided by 2
+                                        petalToDrop = "17_" + (grindRarity-1);
+                                        petalDrops.push(petalToDrop);
+                                    } else if (randomLootDropChance < (1-dropRarityChances[grindRarity][1])/3) {
+                                        // For same rarity, it's the chance of same rarity drop divided by 3
+                                        petalToDrop = "17_" + grindRarity;
+                                        petalDrops.push(petalToDrop);
+                                    } else {
+                                        continue;
+                                    }
+                                }``
+
+                                petalDrops.push(petalToDrop);
+                            }
                         }
                     }
-                    let gotRareLoot = Math.random() < 0.05;
                     if(gotRareLoot) {
                         totalXP *= 5;
                     }
@@ -1285,6 +1338,19 @@ client.on('interactionCreate', (interaction) => {
             interaction.update({
                 content: `Which ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
                 components: rows, 
+                flags: MessageFlags.Ephemeral
+            })
+        } else if (interaction.customId === 'loadout') {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+
+            data[user.id]["talents"]["loadout"]++;
+            data[user.id]["loadout"].push("-1_0");
+            saveData();
+            
+            interaction.update({
+                content: `You have leveled up your loadout!`, 
+                components: [], 
                 flags: MessageFlags.Ephemeral
             })
         }

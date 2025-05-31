@@ -17,6 +17,11 @@ export function fillInProfileBlanks(profile) {
     if (!profile.inventory) profile.inventory = {"0": [0, 0, 0, 0, 0, 0, 0, 0, 0]};
     if (!profile.loadout) profile.loadout = ["0_0", "-1_0", "-1_0"];
     if (!profile.health) profile.health = 30;
+    if (!profile.talents) profile.talents = {
+        "loadout": 2,
+        "evasion": 0,
+        "max_hp": 0
+    };
     let totalMH = 0;
     for(let i = 0; i < 3; i++) {
         if(profile.loadout[i].split("_")[0] == "-1") continue;
