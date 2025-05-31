@@ -17,7 +17,9 @@ export const petalTypes = [
     "Lightning", 
     "Glass", 
     "Rose",
-    "Root"
+    "Root",
+    "Bur", // 15
+    "Stinger"
 ]
 
 export const petalStats = [
@@ -33,7 +35,8 @@ export const petalStats = [
         description: "4 in 1 deal.", 
         damage: 3, 
         heal: 0, 
-        max_health: 0
+        max_health: 0,
+        count: 4
     }, 
     {
         name: "Light", 
@@ -127,5 +130,21 @@ export const petalStats = [
         heal: 0,
         max_health: 0,
         armour: 0.6
+    },
+    {
+        name: "Bur",
+        description: "Pierces through enemy armour.",
+        damage: 2,
+        heal: 0,
+        max_health: 0,
+        pierce: 0.6
+    },
+    {
+        name: "Stinger",
+        description: "Very strong. Has a chance to hit twice, but has a chance to miss.",
+        damage: 3.5, // per stinger
+        heal: 0,
+        max_health: 0,
+        count: 2
     }
 ]

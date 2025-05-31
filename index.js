@@ -60,7 +60,7 @@ function getPetalRarity(petal) {
 
 // Gets the petal dmg
 function getPetalDamage(petal, rarity) {
-    return petalStats[petal].damage * (3 ** rarity);
+    return Math.floor(petalStats[petal].damage * (3 ** rarity));
 }
 
 // Returns a string of the petal, like "Common Light (2 Damage): 5x"
@@ -586,11 +586,24 @@ client.on('interactionCreate', (interaction) => {
                 if(data[user.id]["loadout"].includes(9)) {
                     doubleDamage = (Math.random() < (petalStats[9].rotation * (data[user.id].inventory["9"] + 1)));
                 }
-                
+
+                // check if user has bur
+                let bur = 0;
+                for (const petal of data[user.id]["loadout"]) {
+                    if(petal.split("_")[0] == 15) {
+                        bur = petalStats[15].pierce * (3 ** (petal.split("_")[1] || 0));
+                        bur = Math.floor(bur);
+                        break;
+                    }
+                }
+               
+                // check all petals for dmg and heals
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
                         p_id = petal.split("_")[0];
                         if (p_id == -1) continue; // Skip if petal is -1
+
+                        // Missile
                         if (p_id == 8) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0) {
@@ -600,6 +613,8 @@ client.on('interactionCreate', (interaction) => {
                             }
                             continue;
                         }
+
+                        // Lightning
                         if (p_id == 11) {
                             for (let mobID = 0; mobID < data[user.id]["grind-info"].mobs.length; mobID++)
                             if(data[user.id]["grind-info"].mobs[mobID].health > 0) {
@@ -607,24 +622,61 @@ client.on('interactionCreate', (interaction) => {
                             }
                             continue;
                         }
+
+                        // Glass
                         if (p_id == 12) {
                             let mobToHit = Math.floor(Math.random() * data[user.id]["grind-info"].mobs.length);
                             if(data[user.id]["grind-info"].mobs[mobToHit].health > 0 && mobToHit != mobToAttack) {
                                 data[user.id]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                             }
                         }
+
+                        // Stinger
+                        if (p_id == 16) { // 35% miss chance
+                            let hitTimes = 0;
+                            let hitRNG = Math.random();
+                            if(hitRNG < 0.65) {
+                                totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                                hitTimes++;
+                            }
+                            
+                            hitRNG = Math.random();
+                            if(hitRNG < 0.65) {
+                                totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                                hitTimes++;
+                            }
+                            extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
+                        }
+
                         totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        
+                        // check mob armour
+                        let mobInfo = mobStats[data[user.id]["grind-info"].mobs[mobToAttack].name]
+                        if(mobInfo.armour) {
+                            let mobRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].mobs[mobToAttack].rarity)
+                            let mobArmour = mobInfo.armour * (3 ** mobRarity);
+                            mobArmour = Math.floor(mobArmour);
+                            console.log("Mob armour: " + mobArmour);
+                            totalPlayerDamage -= mobArmour;
+                        }
+                        
+                        // apply bur buff
+                        if(petalStats[p_id].count) {
+                            // petal has multiple copies
+                            totalPlayerDamage += bur * petalStats[p_id].count;
+                        } else {
+                            // petal has 1 copy
+                            totalPlayerDamage += bur;
+                        }
+
                         data[user.id]["health"] += petalStats[p_id].heal * (3 ** (petal.split("_")[1] || 0))
                     }
                 }
+
                 if(data[user.id]["health"] > data[user.id]["max_health"]) {
                     data[user.id]["health"] = data[user.id]["max_health"]
                 }
 
-                // check mob armour
-                if(data[user.id]["grind-info"].mobs[mobToAttack].armour) {
-                    totalPlayerDamage -= data[user.id]["grind-info"].mobs[mobToAttack].armour;
-                }
                 // apply dmg
                 data[user.id]["grind-info"].mobs[mobToAttack].health -= Math.floor(totalPlayerDamage)   ;
                 saveData();
@@ -638,14 +690,14 @@ client.on('interactionCreate', (interaction) => {
                         armour += petalStats[data[user.id]["loadout"][i].split("_")[0]].armour * (3 ** (data[user.id]["loadout"][i].split("_")[1] || 0));
                     }
                 }
+
                 armour = Math.floor(armour);
-                console.log("Armour: " + armour);
 
                 // All mobs update
                 let totalDamage = 0;
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                     if(data[user.id]["grind-info"].mobs[i].health > 0) {
-                        totalDamage += data[user.id]["grind-info"].mobs[i].damage;
+                        totalDamage += Math.ceil(data[user.id]["grind-info"].mobs[i].damage);
                     }
                     if (data[user.id]["grind-info"].mobs[i].health <= 0 && !data[user.id]["grind-info"].mobs[i].dead) {
                         data[user.id]["grind-info"].mobsLeft -= 1;
