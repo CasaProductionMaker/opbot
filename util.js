@@ -23,11 +23,11 @@ export function fillInProfileBlanks(profile) {
         "max_hp": 0
     };
     let totalMH = 0;
-    for(let i = 0; i < 3; i++) {
+    for(let i = 0; i < profile.talents.loadout; i++) {
+        // Add empty slots if needed
+        if(profile.loadout[i] == undefined) profile.loadout.push("-1_0");
+        // Ignore non-petals
         if(profile.loadout[i].split("_")[0] == "-1") continue;
-        // console.log("petal id", profile.loadout[i].split("_")[0]);
-        // console.log("petalstats", petalStats[profile.loadout[i].split("_")[0]]);
-        // console.log("max_health", petalStats[profile.loadout[i].split("_")[0]].max_health);
         totalMH += petalStats[profile.loadout[i].split("_")[0]].max_health * (3 ** profile.loadout[i].split("_")[1]);
     }
     profile.max_health = Math.floor(Math.sqrt(5 * profile.xp) + 30) + totalMH;

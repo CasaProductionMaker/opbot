@@ -411,6 +411,27 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         });
     }
+
+    if (interaction.commandName === 'loadout') {
+        const inter = interaction.options.get('user') || interaction;
+        data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
+        saveData();
+
+        let loadoutText = "";
+        for (const i in data[inter.user.id].loadout) {
+            const petal = data[inter.user.id].loadout[i];
+            if (petal.split("_")[0] == "-1") {
+                loadoutText += `- Empty Slot!\n`;
+                continue;
+            }
+            loadoutText += singlePetalToText(petal, inter);
+        }
+
+        interaction.reply({
+            content: `**Loadout of ${inter.user.username}**\n${loadoutText}`
+        });
+    }
+
     if (interaction.commandName === 'profile') { // Profile command
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
@@ -483,31 +504,24 @@ client.on('interactionCreate', (interaction) => {
             interaction.reply("You have respawned! You can respawn again in 5 minutes.");
         }
     }
-    if (interaction.commandName === "edit_slot") {
+    if (interaction.commandName === "edit_loadout") {
         const user = interaction.user;
-        const slot = interaction.options.get("slot").value;
         
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
-        let rows = [];
-        let petalsSoFar = 0;
-        for (const petal in data[user.id]["inventory"]) {
-            if(petalsSoFar % 5 == 0) {
-                rows.push(new ActionRowBuilder());
-            }
-
-            rows[rows.length - 1].addComponents(
+        let row = new ActionRowBuilder();
+        for (let i = 0; i < data[user.id]["loadout"].length; i++) {
+            row.addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`editslot-${slot}-${petal}`)
-                    .setLabel(getPetalType(petal))
+                    .setCustomId(`editloadout-${i}`)
+                    .setLabel(`Slot ${i+1}`)
                     .setStyle(ButtonStyle.Primary)
-            );
-            petalsSoFar++;
+            )
         }
-
+        
         interaction.reply({
-            content: `Which petal do you want to put in slot ${slot+1}?`, 
-            components: rows, 
+            content: `Which slot do you want to update?`, 
+            components: [row], 
             flags: MessageFlags.Ephemeral
         })
     }
@@ -1194,6 +1208,36 @@ client.on('interactionCreate', (interaction) => {
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
+        } else if (interaction.customId.includes("editloadout-")) {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            const slot = parseInt(interaction.customId.split("-")[1]);
+
+            let rows = [];
+            let petalsSoFar = 0;
+            for (const petal in data[user.id]["inventory"]) {
+                // skip if no petals of this type. Use reduce to calculate sum
+                if(data[user.id]["inventory"][petal].reduce((a, b) => a + b, 0) == 0) continue;
+                
+                // build petals
+                if(petalsSoFar % 5 == 0) {
+                    rows.push(new ActionRowBuilder());
+                }
+    
+                rows[rows.length - 1].addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`editslot-${slot}-${petal}`)
+                        .setLabel(getPetalType(petal))
+                        .setStyle(ButtonStyle.Primary)
+                );
+                petalsSoFar++;
+            }
+    
+            interaction.update({
+                content: `Which petal do you want to put in slot ${slot+1}?`, 
+                components: rows, 
+                flags: MessageFlags.Ephemeral
+            })
         } else if (interaction.customId.includes("editslot-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
@@ -1255,6 +1299,10 @@ client.on('interactionCreate', (interaction) => {
             const petalToSlotIn = interaction.customId.split("-")[2];
             const petalRarity = interaction.customId.split("-")[3];
 
+            // console.log("Slot ID", slotID);
+            // console.log("Petal to slot in", petalToSlotIn);
+            // console.log("Petal rarity", petalRarity);
+
             // safeguard against double slotting. Bool value used after buttons are updated (down below)
             let alreadyEquipped = false;
             for (let i = 0; i < data[user.id]["loadout"].length; i++) {
@@ -1268,7 +1316,12 @@ client.on('interactionCreate', (interaction) => {
                 // Remove petal from slot, put in inventory
                 let slotPetal = data[user.id]["loadout"][slotID].split("_")[0];
                 let slotPetalRarity = data[user.id]["loadout"][slotID].split("_")[1];
+                // console.log("Slot petal", slotPetal);
+                // console.log("Slot petal rarity", slotPetalRarity);
                 if(slotPetal != "-1") {
+                    if(data[user.id]["inventory"][slotPetal] == undefined) {
+                        data[user.id]["inventory"][slotPetal] = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
+                    }
                     data[user.id]["inventory"][slotPetal][slotPetalRarity]++;
                 }
                 
@@ -1309,8 +1362,6 @@ client.on('interactionCreate', (interaction) => {
                         .setStyle(style)
                         .setDisabled(dis)
                 );
-                
-                console.log("Rarity increment", rarity);
                 petalsSoFar++;
             }
 
@@ -1327,7 +1378,7 @@ client.on('interactionCreate', (interaction) => {
             // Special msg if no petals left in inventory
             if (petalsSoFar == 0) {
                 interaction.update({
-                    content: `You have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
+                    content: `Success. You now have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
                     components: [], 
                     flags: MessageFlags.Ephemeral
                 })
@@ -1335,8 +1386,17 @@ client.on('interactionCreate', (interaction) => {
             }
 
             // otherwise keep msg
+            let loadoutText = "";
+            for (const i in data[user.id].loadout) {
+                const petal = data[user.id].loadout[i];
+                if (petal.split("_")[0] == "-1") {
+                    loadoutText += `- Empty Slot!\n`;
+                    continue;
+                }
+                loadoutText += singlePetalToText(petal, interaction);
+            }
             interaction.update({
-                content: `Which ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
+                content: `**New loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
@@ -1344,12 +1404,14 @@ client.on('interactionCreate', (interaction) => {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
+            let starCost = constants.talentCosts.loadout[data[user.id]["talents"]["loadout"]]
+            data[user.id]["stars"] -= starCost;
             data[user.id]["talents"]["loadout"]++;
             data[user.id]["loadout"].push("-1_0");
             saveData();
             
             interaction.update({
-                content: `You have leveled up your loadout!`, 
+                content: `You have leveled up your loadout for ${starCost} stars!`, 
                 components: [], 
                 flags: MessageFlags.Ephemeral
             })

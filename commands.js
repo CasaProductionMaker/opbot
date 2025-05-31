@@ -95,7 +95,18 @@ export const commands = [
                 type: ApplicationCommandOptionType.User
             }
         ]
-    }, 
+    },
+    {
+        name: "loadout",
+        description: "View a user's loadout",
+        options: [
+            {
+                name: "user", 
+                description: "The user to get loadout of. If not provided, it will get your loadout.",
+                type: ApplicationCommandOptionType.User
+            }
+        ]
+    },
     {
         name: "respawn", 
         description: "Respawn your character to full health every 5 mins. If spend option is 'yes' you can use 50 stars.", 
@@ -124,30 +135,8 @@ export const commands = [
         ]
     }, 
     {
-        name: "edit_slot", 
-        description: "Change which petal is in a loadout slot.", 
-        options: [
-            {
-                name: "slot", 
-                description: "Slot to edit.", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true, 
-                choices: [
-                    {
-                        name: "Slot 1", 
-                        value: 0
-                    }, 
-                    {
-                        name: "Slot 2", 
-                        value: 1
-                    }, 
-                    {
-                        name: "Slot 3", 
-                        value: 2
-                    }
-                ]
-            }
-        ]
+        name: "edit_loadout", 
+        description: "Change which petal is in a loadout slot."
     }, 
     {
         name: "submit_idea", 

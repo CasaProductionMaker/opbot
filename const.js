@@ -37,7 +37,7 @@ export const dropRarityChances = [
 ]
 
 export const talentCosts = {
-    "loadout": [0, 0, 0, 100, 3000, 10000, 300000, 1000000],
+    "loadout": [0, 0, 100, 3000, 10000, 300000, 1000000],
     "evasion": [],
     "max_hp": []
 }
