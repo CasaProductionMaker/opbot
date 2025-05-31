@@ -217,7 +217,8 @@ client.on('interactionCreate', (interaction) => {
         const rarity = interaction.options.get("rarity").value;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
-        data[user.id]["inventory"][petal] = rarity;
+        data[user.id]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        data[user.id]["inventory"][petal][rarity] = 1; // Set the rarity to 1
         saveData();
         interaction.reply(`Added ${petalRarities[rarity]} ${petalTypes[petal]} to ${user.username}`)
     }
@@ -322,7 +323,7 @@ client.on('interactionCreate', (interaction) => {
             if(data[user.id]["talents"][talent] == constants.talentCosts[talent].length) {
                 row.addComponents(
                     new ButtonBuilder()
-                        .setCustomId(talent)
+                        .setCustomId(talent + "-talent")
                         .setLabel(`${talent} (MAX)`)
                         .setStyle(ButtonStyle.Success)
                         .setDisabled(true)
@@ -330,7 +331,7 @@ client.on('interactionCreate', (interaction) => {
             } else {
                 row.addComponents(
                     new ButtonBuilder()
-                        .setCustomId(talent)
+                        .setCustomId(talent + "-talent")
                         .setLabel(`${talent} (${talentCost} stars)`)
                         .setStyle(buttonStyle)
                         .setDisabled(data[user.id]["stars"] < talentCost)
@@ -345,7 +346,6 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
-
     if (interaction.commandName === 'grind') {
         const biome = interaction.options.get('biome');
         const rarity = "common";
@@ -411,7 +411,6 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         });
     }
-
     if (interaction.commandName === 'loadout') {
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
@@ -426,13 +425,21 @@ client.on('interactionCreate', (interaction) => {
             }
             loadoutText += singlePetalToText(petal, inter);
         }
+        let secondaryLoadoutText = "";
+        for (const i in data[inter.user.id].second_loadout) {
+            const petal = data[inter.user.id].second_loadout[i];
+            if (petal.split("_")[0] == "-1") {
+                secondaryLoadoutText += `- Empty Slot!\n`;
+                continue;
+            }
+            secondaryLoadoutText += singlePetalToText(petal, inter);
+        }
 
         interaction.reply({
-            content: `**Loadout of ${inter.user.username}**\n${loadoutText}`
+            content: `**Loadout of ${inter.user.username}**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`,
         });
     }
-
-    if (interaction.commandName === 'profile') { // Profile command
+    if (interaction.commandName === 'profile') { 
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
@@ -525,6 +532,27 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
+    if (interaction.commandName === "edit_secondary_loadout") {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData();
+
+        let row = new ActionRowBuilder();
+        for (let i = 0; i < data[user.id]["second_loadout"].length; i++) {
+            row.addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`editloadout2-${i}`)
+                    .setLabel(`Slot ${i+1}`)
+                    .setStyle(ButtonStyle.Primary)
+            )
+        }
+        
+        interaction.reply({
+            content: `Which slot in your secondary loadout do you want to update?`, 
+            components: [row], 
+            flags: MessageFlags.Ephemeral
+        })
+    }
     if (interaction.commandName === 'help') {
         let commandList = "";
         for (let i = 0; i < commands.length; i++) {
@@ -546,7 +574,7 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
-    if (interaction.commandName == "petal_stats") {
+    if (interaction.commandName === "petal_stats") {
         const petal = interaction.options.get("petal").value;
         const rarity = interaction.options.get("rarity").value;
 
@@ -566,12 +594,34 @@ client.on('interactionCreate', (interaction) => {
 
         interaction.reply(statsText);
     }
+    if (interaction.commandName === "swap_loadout_slot") {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData();
+
+        // generate buttons
+        const row = new ActionRowBuilder();
+        for (let i = 0; i < data[user.id]["loadout"].length; i++) {
+            row.addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`swappetal-${i}`)
+                    .setLabel(`Slot ${i+1}`)
+                    .setStyle(ButtonStyle.Primary)
+            )
+        }
+        interaction.reply({
+            content: `Which slot do you want to swap?`,
+            components: [row],
+            flags: MessageFlags.Ephemeral
+        })
+    }
 
     if (interaction.isButton()) {
         // super mobs to fix
         if (interaction.customId === "super-mob") {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
+            saveData();
             if(data[user.id]["health"] <= 0) {
                 interaction.reply({content: "You are dead! Use /respawn to respawn.", flags: MessageFlags.Ephemeral});
                 return;
@@ -626,8 +676,10 @@ client.on('interactionCreate', (interaction) => {
         } else if (Number.isInteger(parseInt(interaction.customId))) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             let mobToAttack = interaction.customId;
 
+            // safeguards
             if(!data[user.id]["grind-info"]) {
                 interaction.reply("You are not grinding! Use /grind to start grinding.");
                 return;
@@ -641,6 +693,8 @@ client.on('interactionCreate', (interaction) => {
             if(data[user.id]["grind-info"].mobs[mobToAttack].health > 0) {
                 let totalPlayerDamage = 0;
                 let extraInfo = "";
+
+                // check for double damage from faster
                 let doubleDamage = false;
                 if(data[user.id]["loadout"].includes(9)) {
                     doubleDamage = (Math.random() < (petalStats[9].rotation * (data[user.id].inventory["9"] + 1)));
@@ -665,24 +719,37 @@ client.on('interactionCreate', (interaction) => {
                     }
                 }
 
-                // do bubble check
+                // do bubble stuff
                 let bubbleRarity = -1;
+                let grindRarity = data[user.id]["grind-info"].rarity;
+                let skipZone = false;
                 for (const petal of data[user.id]["loadout"]) {
-                    if(petal.split("_")[0] == 18) {
-                        bubbleRarity = petal.split("_")[1];
+                    if(petal.split("_")[0] == "18") {
+                        bubbleRarity = parseInt(petal.split("_")[1]);
                         break;
                     }
                 }
 
-                let skipChance = 0;
-                let grindRarity = petalRarities.indexOf(data[user.id]["grind-info"].rarity);
-                if (bubbleRarity - grindRarity > 3) {
-                    skipChance = 1 
-                } else if (bubbleRarity - grindRarity > 0) {
-                    skipChance = 1 - 2.5 ** (- bubbleRarity + grindRarity);
-                    // around 60% chance to skip 1 rarity below. per hit
-                    // around 84% chance to skip 2 rarities below
-                    // around 96% chance to skip 3 rarities below
+                // check if user has poo
+                let pooChance = 0;
+                for (const petal of data[user.id]["loadout"]) {
+                    if(petal.split("_")[0] == 19) {
+                        pooChance = petalStats[19].smell + (0.03 * (petal.split("_")[1] || 0));
+                    }
+                }
+                if(Math.random() < pooChance) {
+                    // apply poo effect
+                    pooChance = 1;
+                } else {
+                    pooChance = 0;
+                }
+
+                // check if user has talisman
+                let talismanChance = 0;
+                for (const petal of data[user.id]["loadout"]) {
+                    if(petal.split("_")[0] == 20) {
+                        talismanChance = petalStats[19].evasion + (0.1 * (petal.split("_")[1] || 0));
+                    }
                 }
                
                 // check all petals for dmg and heals
@@ -736,6 +803,13 @@ client.on('interactionCreate', (interaction) => {
                             extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
                         }
 
+                        // Bubble
+                        if (p_id == 18) {
+                            if(bubbleRarity == -1) continue;
+                            if(bubbleRarity < grindRarity) continue;
+                            skipZone = true;
+                        }
+
                         totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                         
                         // check mob armour
@@ -747,19 +821,15 @@ client.on('interactionCreate', (interaction) => {
                             totalPlayerDamage -= mobArmour;
                         }
                         
-                        // apply bur buff
-                        if(petalStats[p_id].count) {
-                            // petal has multiple copies
-                            totalPlayerDamage += bur * petalStats[p_id].count;
-                        } else {
-                            // petal has 1 copy
-                            totalPlayerDamage += bur;
-                        }
+                        // apply bur buff multiplied by petal count
+                        totalPlayerDamage += bur * (petalStats[p_id].count || 1);
 
+                        // heal player based on petal's heal
                         data[user.id]["health"] += petalStats[p_id].heal * (3 ** (petal.split("_")[1] || 0))
                     }
                 }
 
+                // do not heal past max health
                 if(data[user.id]["health"] > data[user.id]["max_health"]) {
                     data[user.id]["health"] = data[user.id]["max_health"]
                 }
@@ -770,10 +840,10 @@ client.on('interactionCreate', (interaction) => {
 
                 updatedComponents = interaction.message.components;
 
-                // calculate player armour
+                // calculate player armour from root
                 let armour = 0;
                 for (let i = 0; i < data[user.id]["loadout"].length; i++) {
-                    if(data[user.id]["loadout"][i] != -1 && petalStats[data[user.id]["loadout"][i].split("_")[0]].armour) {
+                    if(data[user.id]["loadout"][i].split("_")[0] != -1 && petalStats[data[user.id]["loadout"][i].split("_")[0]].armour) {
                         armour += petalStats[data[user.id]["loadout"][i].split("_")[0]].armour * (3 ** (data[user.id]["loadout"][i].split("_")[1] || 0));
                     }
                 }
@@ -783,9 +853,18 @@ client.on('interactionCreate', (interaction) => {
                 // All mobs update
                 let totalDamage = 0;
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
-                    if(data[user.id]["grind-info"].mobs[i].health > 0) {
+                    // if mob is not dead and poo is not warding it
+                    if(data[user.id]["grind-info"].mobs[i].health > 0 && pooChance < 1) {
+                        if(Math.random() < talismanChance) {
+                            // if talisman equipped, chance to not take damage
+                            extraInfo += `\nYour Poo has warded a mob from you!`;
+                            continue;
+                        }
+                        // do damage
                         totalDamage += Math.ceil(data[user.id]["grind-info"].mobs[i].damage);
                     }
+
+                    // if a mob has died from this attack, count down with mobsLeft and update the button
                     if (data[user.id]["grind-info"].mobs[i].health <= 0 && !data[user.id]["grind-info"].mobs[i].dead) {
                         data[user.id]["grind-info"].mobsLeft -= 1;
                         data[user.id]["grind-info"].mobs[i].dead = true;
@@ -809,20 +888,14 @@ client.on('interactionCreate', (interaction) => {
                                 )
                             }
                         }
+                        updatedComponents = [row];
                     }
                 }
-                const newRow = new ActionRowBuilder();
-                newRow.addComponents(
-                    new ButtonBuilder()
-                        .setCustomId("higher-rarity")
-                        .setLabel("Go to higher rarity zone")
-                        .setStyle(ButtonStyle.Success)
-                )
 
+                //damage player
                 if(totalDamage > armour) {
                     data[user.id]["health"] -= totalDamage - armour;
                 }
-
                 saveData();
                 if (data[user.id]["health"] <= 0) {
                     delete data[user.id]["grind-info"];
@@ -835,14 +908,15 @@ client.on('interactionCreate', (interaction) => {
                     return;
                 }
                 
+                // if all mobs are dead, end grind
                 if (data[user.id]["grind-info"].mobsLeft <= 0) {
                     let totalXP = 0;
                     let petalDrops = [];
-
                     let gotRareLoot = Math.random() < 0.05;
 
                     // calc petal drops
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
+                        // get xp for the mob (no rare loot applied)
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
 
                         let petalRolls = 1;
@@ -850,60 +924,58 @@ client.on('interactionCreate', (interaction) => {
                             petalRolls = 4;
                         }
                         for(let b = 0; b < petalRolls; b++) {
-                            const randomLootDropChance = Math.random() * 2;
-                            if(randomLootDropChance <= 1.0) {
-                                const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
-                                let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
-                                // console.log("petalToDrop: " + petalToDrop);
-                                // console.log("grindRarity: " + grindRarity);
+                            for (const p of mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop) {
+                                const randomLootDropChance = Math.random() * 2;
+                                if(randomLootDropChance <= 1.0) {
+                                    const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
+                                    let petalToDrop = p;
 
-                                if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
-                                    petalToDrop += "_" + (grindRarity - 2);
-                                } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
-                                    petalToDrop += "_" + (grindRarity - 1);
-                                } else {
-                                    petalToDrop += "_" + grindRarity;
-                                }
-                                if (petalToDrop.split("_")[1] < 0) { // filter "below common" rarities
-                                continue;
-                                }
-
-                                // golden leaf overrides petal drop
-                                if(petalToDrop.split("_")[0] == "17") {
-                                    if(grindRarity < 4) continue;
-                                    // console.log("drop chance -2", (1-dropRarityChances[grindRarity-2][1]));
-                                    // console.log("drop chance -1", (1-dropRarityChances[grindRarity-1][1])/2);
-                                    // console.log("drop chance same", (1-dropRarityChances[grindRarity][1])/3);
-                                    // console.log("randomLootDropChance: " + randomLootDropChance);
-                                    if(randomLootDropChance < (1-dropRarityChances[grindRarity-2][1])) {
-                                        // For -2 rarity, it's the chance of that rarity dropping same rarity petal
-                                        petalToDrop = "17_" + (grindRarity-2);
-                                        petalDrops.push(petalToDrop);
-                                    } else if (randomLootDropChance < (1-dropRarityChances[grindRarity-1][1])/2) {
-                                        // For -1 rarity, it's the chance of that rarity dropping same rarity petal divided by 2
-                                        petalToDrop = "17_" + (grindRarity-1);
-                                        petalDrops.push(petalToDrop);
-                                    } else if (randomLootDropChance < (1-dropRarityChances[grindRarity][1])/3) {
-                                        // For same rarity, it's the chance of same rarity drop divided by 3
-                                        petalToDrop = "17_" + grindRarity;
-                                        petalDrops.push(petalToDrop);
+                                    if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
+                                        petalToDrop += "_" + (grindRarity - 2);
+                                    } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
+                                        petalToDrop += "_" + (grindRarity - 1);
                                     } else {
+                                        petalToDrop += "_" + grindRarity;
+                                    }
+                                    if (petalToDrop.split("_")[1] < 0) { // filter "below common" rarities
                                         continue;
                                     }
-                                }``
 
-                                petalDrops.push(petalToDrop);
+                                    // golden leaf overrides petal drop
+                                    if(petalToDrop.split("_")[0] == "17") {
+                                        if(grindRarity < 4) continue;
+                                        
+                                        if(randomLootDropChance < (1-dropRarityChances[grindRarity-2][1])) {
+                                            // For -2 rarity, it's the chance of that rarity dropping same rarity petal
+                                            petalToDrop = "17_" + (grindRarity-2);
+                                            petalDrops.push(petalToDrop);
+                                        } else if (randomLootDropChance < (1-dropRarityChances[grindRarity-1][1])/2) {
+                                            // For -1 rarity, it's the chance of that rarity dropping same rarity petal divided by 2
+                                            petalToDrop = "17_" + (grindRarity-1);
+                                            petalDrops.push(petalToDrop);
+                                        } else if (randomLootDropChance < (1-dropRarityChances[grindRarity][1])/3) {
+                                            // For same rarity, it's the chance of same rarity drop divided by 3
+                                            petalToDrop = "17_" + grindRarity;
+                                            petalDrops.push(petalToDrop);
+                                        } else {
+                                            continue;
+                                        }
+                                    }
+
+                                    petalDrops.push(petalToDrop);
+                                }
                             }
                         }
                     }
+                    // add rare loot multiplier
                     if(gotRareLoot) {
                         totalXP *= 5;
                     }
                     editXP(user.id, totalXP);
                     data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
-                    let petalDropText = "\n**New petals dropped!**";
 
-                    // Update player inventory
+                    // Update player inventory with drops
+                    let petalDropText = "\n**New petals dropped!**";
                     for(const pet in petalDrops) {
                         let the_petal = petalDrops[pet];
                         let petal_id = the_petal.split("_")[0];
@@ -920,6 +992,7 @@ client.on('interactionCreate', (interaction) => {
                     if(petalDropText == "\n**New petals dropped!**") petalDropText = "";
                     saveData();
 
+                    // do not allow further rarity grinding at super level
                     if(data[user.id]["grind-info"].rarity == "ultra") {
                         interaction.update({
                             content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 2)} stars!${petalDropText}\nWould you like to continue grinding in this zone?`, 
@@ -936,6 +1009,8 @@ client.on('interactionCreate', (interaction) => {
                         });
                         return;
                     }
+
+                    // allow user to continue grinding or go to higher rarity zone
                     interaction.update({
                         content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 2)} stars!${petalDropText}\nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
                         components: [
@@ -955,6 +1030,48 @@ client.on('interactionCreate', (interaction) => {
                     });
                     return;
                 }
+                // if we have a bubble to skip zone, skip the zone
+                if(skipZone) {
+                    // do not allow further rarity grinding at super level
+                    if(data[user.id]["grind-info"].rarity == "ultra") {
+                        interaction.update({
+                            content: `You have bubbled through this zone! \nWould you like to continue grinding in this zone?`, 
+                            components: [
+                                new ActionRowBuilder()
+                                    .addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId("continue-grind")
+                                            .setLabel("Continue grinding")
+                                            .setStyle(ButtonStyle.Primary)
+                                    )
+                            ], 
+                            flags: MessageFlags.Ephemeral
+                        });
+                        return;
+                    }
+
+                    // allow user to continue grinding or go to higher rarity zone
+                    interaction.update({
+                        content: `You have bubbled through this zone! \nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
+                        components: [
+                            new ActionRowBuilder()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setCustomId("continue-grind")
+                                        .setLabel("Continue grinding")
+                                        .setStyle(ButtonStyle.Primary),
+                                    new ButtonBuilder()
+                                        .setCustomId("higher-rarity")
+                                        .setLabel("Go to higher rarity zone")
+                                        .setStyle(ButtonStyle.Success)
+                                )
+                        ], 
+                        flags: MessageFlags.Ephemeral
+                    });
+                    return;
+                }
+
+                // generate mob list to show in message
                 let mobList = "";
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                     mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${data[user.id]["grind-info"].mobs[i].health} HP, ${data[user.id]["grind-info"].mobs[i].damage} DMG\n`;
@@ -972,6 +1089,7 @@ client.on('interactionCreate', (interaction) => {
             const rarity = data[interaction.user.id]["grind-info"].rarity;
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             if(data[user.id]["health"] <= 0) {
                 interaction.reply("You are dead! You cannot grind.");
                 return;
@@ -1034,6 +1152,7 @@ client.on('interactionCreate', (interaction) => {
             const rarity = petalLowercaseRarities[petalLowercaseRarities.indexOf(data[interaction.user.id]["grind-info"].rarity) + 1];
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             if(data[user.id]["health"] <= 0) {
                 interaction.reply("You are dead! You cannot grind.");
                 return;
@@ -1125,6 +1244,7 @@ client.on('interactionCreate', (interaction) => {
         } else if (interaction.customId.includes("craft-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             const petalType = interaction.customId.split("-")[1];
             const currentPetalRarity = interaction.customId.split("-")[2];
 
@@ -1211,6 +1331,7 @@ client.on('interactionCreate', (interaction) => {
         } else if (interaction.customId.includes("editloadout-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             const slot = parseInt(interaction.customId.split("-")[1]);
 
             let rows = [];
@@ -1238,9 +1359,41 @@ client.on('interactionCreate', (interaction) => {
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
+        } else if (interaction.customId.includes("editloadout2-")) {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+            const slot = parseInt(interaction.customId.split("-")[1]);
+
+            let rows = [];
+            let petalsSoFar = 0;
+            for (const petal in data[user.id]["inventory"]) {
+                // skip if no petals of this type. Use reduce to calculate sum
+                if(data[user.id]["inventory"][petal].reduce((a, b) => a + b, 0) == 0) continue;
+                
+                // build petals
+                if(petalsSoFar % 5 == 0) {
+                    rows.push(new ActionRowBuilder());
+                }
+    
+                rows[rows.length - 1].addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`editslot2-${slot}-${petal}`)
+                        .setLabel(getPetalType(petal))
+                        .setStyle(ButtonStyle.Primary)
+                );
+                petalsSoFar++;
+            }
+    
+            interaction.update({
+                content: `Which petal do you want to put in slot ${slot+1} of your secondary loadout?`, 
+                components: rows, 
+                flags: MessageFlags.Ephemeral
+            })
         } else if (interaction.customId.includes("editslot-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
             const slot = parseInt(interaction.customId.split("-")[1]);
             const petal = interaction.customId.split("-")[2];
 
@@ -1291,9 +1444,64 @@ client.on('interactionCreate', (interaction) => {
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
+        } else if (interaction.customId.includes("editslot2-")) {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+            const slot = parseInt(interaction.customId.split("-")[1]);
+            const petal = interaction.customId.split("-")[2];
+
+            let rows = [];
+            let petalsSoFar = 0;
+            for (const rarity in data[user.id]["inventory"][petal]) {
+                console.log("Petal", rarity);
+                if(data[user.id]["inventory"][petal][rarity] <= 0) continue; // skip if no petals of this rarity
+                if(petalsSoFar % 5 == 0) {
+                    rows.push(new ActionRowBuilder());
+                }
+
+                let style = ButtonStyle.Primary;
+                let text = `${getPetalRarity(rarity)} ${getPetalType(petal)}`;
+                let dis = false;
+                if(data[user.id]["second_loadout"].indexOf(`${petal}_${rarity}`) >= 0) {
+                    dis = true;
+                    if(data[user.id]["second_loadout"].indexOf(`${petal}_${rarity}`) == slot) {
+                        style = ButtonStyle.Success;
+                        text += ` already in slot ${slot+1}!`;
+                    } else {
+                        style = ButtonStyle.Danger;
+                        text += ` in another slot!`;
+                    }
+                }
+                rows[rows.length - 1].addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`slotpetal-${slot}-${petal}-${rarity}`)
+                        .setLabel(text)
+                        .setStyle(style)
+                        .setDisabled(dis)
+                );
+                petalsSoFar++;
+            }
+
+            // Special msg if no petals left in inventory
+            if (petalsSoFar == 0) {
+                interaction.update({
+                    content: `You have no ${petalTypes[petal]} left in your inventory!`, 
+                    components: [], 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
+            interaction.update({
+                content: `Which ${petalTypes[petal]} do you want to put in slot ${slot+1}?`, 
+                components: rows, 
+                flags: MessageFlags.Ephemeral
+            })
         } else if (interaction.customId.includes("slotpetal-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
 
             const slotID = parseInt(interaction.customId.split("-")[1]);
             const petalToSlotIn = interaction.customId.split("-")[2];
@@ -1400,9 +1608,120 @@ client.on('interactionCreate', (interaction) => {
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
-        } else if (interaction.customId === 'loadout') {
+        } else if (interaction.customId.includes("slotpetal2-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+
+            const slotID = parseInt(interaction.customId.split("-")[1]);
+            const petalToSlotIn = interaction.customId.split("-")[2];
+            const petalRarity = interaction.customId.split("-")[3];
+
+            // console.log("Slot ID", slotID);
+            // console.log("Petal to slot in", petalToSlotIn);
+            // console.log("Petal rarity", petalRarity);
+
+            // safeguard against double slotting. Bool value used after buttons are updated (down below)
+            let alreadyEquipped = false;
+            for (let i = 0; i < data[user.id]["second_loadout"].length; i++) {
+                if(data[user.id]["second_loadout"][i] == `${petalToSlotIn}_${petalRarity}`) {
+                    alreadyEquipped = true;
+                    break;
+                }
+            }
+            
+            if(!alreadyEquipped) {
+                // Remove petal from slot, put in inventory
+                let slotPetal = data[user.id]["second_loadout"][slotID].split("_")[0];
+                let slotPetalRarity = data[user.id]["second_loadout"][slotID].split("_")[1];
+                // console.log("Slot petal", slotPetal);
+                // console.log("Slot petal rarity", slotPetalRarity);
+                if(slotPetal != "-1") {
+                    if(data[user.id]["inventory"][slotPetal] == undefined) {
+                        data[user.id]["inventory"][slotPetal] = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
+                    }
+                    data[user.id]["inventory"][slotPetal][slotPetalRarity]++;
+                }
+                
+                // Add petal to slot from inventory
+                data[user.id]["second_loadout"][slotID] = `${petalToSlotIn}_${petalRarity}`;
+                if(data[user.id]["inventory"][petalToSlotIn][petalRarity] > 0) {
+                    data[user.id]["inventory"][petalToSlotIn][petalRarity]--;
+                }
+                saveData();
+            }
+            
+
+            let rows = [];
+            let petalsSoFar = 0;
+            for (const rarity in data[user.id]["inventory"][petalToSlotIn]) {
+                if(data[user.id]["inventory"][petalToSlotIn][rarity] <= 0) continue; // skip if no petals of this rarity
+                if(petalsSoFar % 5 == 0) {
+                    rows.push(new ActionRowBuilder());
+                }
+
+                let style = ButtonStyle.Primary;
+                let text = `${getPetalRarity(rarity)} ${getPetalType(petalToSlotIn)}`;
+                let dis = false;
+                if(data[user.id]["second_loadout"].indexOf(`${petalToSlotIn}_${rarity}`) >= 0) {
+                    dis = true;
+                    if(data[user.id]["second_loadout"].indexOf(`${petalToSlotIn}_${rarity}`) == slotID) {
+                        style = ButtonStyle.Success;
+                        text += ` already in slot ${slotID+1}!`;
+                    } else {
+                        style = ButtonStyle.Danger;
+                        text += ` in another slot!`;
+                    }
+                }
+                rows[rows.length - 1].addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`slotpetal-${slotID}-${petalToSlotIn}-${rarity}`)
+                        .setLabel(text)
+                        .setStyle(style)
+                        .setDisabled(dis)
+                );
+                petalsSoFar++;
+            }
+
+            // if the petal is already equipped, dont do the slotting
+            if(alreadyEquipped) {
+                interaction.update({
+                    content: `You already have one of this petal in slot ${slotID+1} of your secondary loadout!`, 
+                    components: rows, 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
+            // Special msg if no petals left in inventory
+            if (petalsSoFar == 0) {
+                interaction.update({
+                    content: `Success. You now have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
+                    components: [], 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
+            // otherwise keep msg
+            let loadoutText = "";
+            for (const i in data[user.id].loadout) {
+                const petal = data[user.id].loadout[i];
+                if (petal.split("_")[0] == "-1") {
+                    loadoutText += `- Empty Slot!\n`;
+                    continue;
+                }
+                loadoutText += singlePetalToText(petal, interaction);
+            }
+            interaction.update({
+                content: `**New secondary loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
+                components: rows, 
+                flags: MessageFlags.Ephemeral
+            })
+        } else if (interaction.customId === 'loadout-talent') {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
 
             let starCost = constants.talentCosts.loadout[data[user.id]["talents"]["loadout"]]
             data[user.id]["stars"] -= starCost;
@@ -1415,6 +1734,43 @@ client.on('interactionCreate', (interaction) => {
                 components: [], 
                 flags: MessageFlags.Ephemeral
             })
+        } else if (interaction.customId.includes("swappetal-")) {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+            const slot = parseInt(interaction.customId.split("-")[1]);
+
+            // swap petals
+            let petal1 = data[user.id]["loadout"][slot];
+            let petal2 = data[user.id]["second_loadout"][slot];
+            data[user.id]["loadout"][slot] = petal2;
+            data[user.id]["second_loadout"][slot] = petal1;
+            saveData();
+
+            // create loadout text
+            let loadoutText = "";
+            for (const i in data[user.id].loadout) {
+                const petal = data[user.id].loadout[i];
+                if (petal.split("_")[0] == "-1") {
+                    loadoutText += `- Empty Slot!\n`;
+                    continue;
+                }
+                loadoutText += singlePetalToText(petal, interaction);
+            }
+            let secondaryLoadoutText = "";
+            for (const i in data[user.id].second_loadout) {
+                const petal = data[user.id].second_loadout[i];
+                if (petal.split("_")[0] == "-1") {
+                    secondaryLoadoutText += `- Empty Slot!\n`;
+                    continue;
+                }
+                secondaryLoadoutText += singlePetalToText(petal, interaction);
+            }
+
+            interaction.reply({
+                content: `Swapped loadout slot ${slot + 1} with secondary loadout slot ${slot + 1}.\n**Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`, 
+                flags: MessageFlags.Ephemeral
+            });
         }
     }
 });

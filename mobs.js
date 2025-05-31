@@ -28,7 +28,8 @@ export const biomes = {
             "Starfish",
             "Jellyfish",
             "Sponge", 
-            "Shell"
+            "Shell", 
+            "Bubble"
         ]
     }, 
     "ant_hell": {
@@ -51,6 +52,15 @@ export const biomes = {
             // "Firefly",
             "Bush"
         ]
+    },
+    "sewers": {
+        name: "Sewers",
+        mobs: [
+            //"Spider", 
+            //"Roach", 
+            "Fly", 
+            //"Moth"
+        ]
     }
 }
 export const mobStats = {
@@ -58,98 +68,98 @@ export const mobStats = {
         health: 7, 
         damage: 3, 
         loot: 4, 
-        petalDrop: 8, 
+        petalDrop: [8], 
         reroll: false
     }, 
     "Bee": {
         health: 4, 
         damage: 3, 
         loot: 2, 
-        petalDrop: 0, 
+        petalDrop: [0], 
         reroll: false
     }, 
     "Rock": {
         health: 10, 
         damage: 0, 
         loot: 1, 
-        petalDrop: 3, 
+        petalDrop: [3], 
         reroll: false
     }, 
     "Ladybug": {
         health: 6, 
         damage: 2, 
         loot: 3, 
-        petalDrop: 13, 
+        petalDrop: [13], 
         reroll: false
     }, 
     "Spider": {
         health: 8, 
         damage: 3, 
         loot: 5, 
-        petalDrop: 9, 
+        petalDrop: [9], 
         reroll: false
     }, 
     "Scorpion": {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: 0, 
+        petalDrop: [0], 
         reroll: false
     },
     "Cactus": {
         health: 10, 
         damage: 3, 
         loot: 2, 
-        petalDrop: 10, 
+        petalDrop: [10], 
         reroll: false
     },
     "Sandstorm": {
         health: 10, 
         damage: 4, 
         loot: 5, 
-        petalDrop: 12, 
+        petalDrop: [12], 
         reroll: false
     },
     "Beetle": {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: 0, 
+        petalDrop: [0], 
         reroll: false
     },
     "Starfish": {
         health: 7, 
         damage: 3, 
         loot: 3, 
-        petalDrop: 7, 
+        petalDrop: [7], 
         reroll: false
     },
     "Jellyfish": {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: 11, 
+        petalDrop: [11], 
         reroll: false
     },
     "Sponge": {
         health: 5, 
         damage: 1, 
         loot: 1, 
-        petalDrop: 0, 
+        petalDrop: [0], 
         reroll: false
     },
     "Shell": {
         health: 5, 
         damage: 2, 
         loot: 2, 
-        petalDrop: 0, 
+        petalDrop: [0], 
         reroll: false
     },
     "Bubble": {
         health: 1,
         damage: 0,
         loot: 1,
-        petalDrop: 0,
+        petalDrop: [18],
         armour: 1,
         reroll: true
     },
@@ -157,42 +167,42 @@ export const mobStats = {
         health: 8, 
         damage: 1, 
         loot: 3, 
-        petalDrop: 6, 
+        petalDrop: [6], 
         reroll: false
     },
     "Worker Ant": {
         health: 6, 
         damage: 1, 
         loot: 2, 
-        petalDrop: 4, 
+        petalDrop: [4], 
         reroll: false
     },
     "Baby Ant": {
         health: 4, 
         damage: 1, 
         loot: 1, 
-        petalDrop: 2, 
+        petalDrop: [2], 
         reroll: false
     },
     "Queen Ant": {
         health: 10, 
         damage: 2, 
         loot: 4, 
-        petalDrop: 5, 
+        petalDrop: [5], 
         reroll: true
     },
     "Mantis": {
         health: 6, 
         damage: 2, 
         loot: 2, 
-        petalDrop: 15, 
+        petalDrop: [15], 
         reroll: false
     },
     "Leafbug": {
         health: 8,
         damage: 1.5,
         loot: 3,
-        petalDrop: 14,
+        petalDrop: [14],
         reroll: false,
         armour: 0.75
     },
@@ -200,35 +210,56 @@ export const mobStats = {
         health: 4,
         damage: 1,
         loot: 1.5,
-        petalDrop: 0,
+        petalDrop: [0],
         reroll: false
     },
     "Wasp": {
         health: 3,
         damage: 3,
         loot: 2,
-        petalDrop: 16,
+        petalDrop: [16],
         reroll: false
     },
     "Soldier Termite": {
         health: 10,
         damage: 0.5,
         loot: 3,
-        petalDrop: 0,
+        petalDrop: [0],
         reroll: true
     },
     "Firefly": {
         health: 3,
         damage: 1,
         loot: 2,
-        petalDrop: 0,
+        petalDrop: [0],
         reroll: false
     },
     "Bush": {
         health: 10,
         damage: 0,
         loot: 2,
-        petalDrop: 17,
+        petalDrop: [17],
         reroll: true
+    }, 
+    "Roach": {
+        health: 5,
+        damage: 1,
+        loot: 1,
+        petalDrop: [0],
+        reroll: false
+    },
+    "Fly": {
+        health: 3,
+        damage: 1,
+        loot: 1,
+        petalDrop: [19, 20],
+        reroll: false
+    },
+    "Moth": {
+        health: 4,
+        damage: 1.5,
+        loot: 1.5,
+        petalDrop: [5],
+        reroll: false
     }
 }

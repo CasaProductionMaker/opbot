@@ -80,6 +80,10 @@ export const commands = [
                     {
                         name: "Jungle",
                         value: "jungle"
+                    },
+                    {
+                        name: "Sewers",
+                        value: "sewers"
                     }
                 ]
             }
@@ -136,7 +140,11 @@ export const commands = [
     }, 
     {
         name: "edit_loadout", 
-        description: "Change which petal is in a loadout slot."
+        description: "Edit your loadout."
+    }, 
+    {
+        name: "edit_secondary_loadout", 
+        description: "Edit your secondary loadout."
     }, 
     {
         name: "submit_idea", 
@@ -248,5 +256,9 @@ export const commands = [
                 ]
             }
         ]
+    }, 
+    {
+        name: "swap_loadout_slot", 
+        description: "Swap a petal in your loadout with a petal in your secondary loadout beneath it."
     }
 ];

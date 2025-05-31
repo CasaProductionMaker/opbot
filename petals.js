@@ -21,7 +21,9 @@ export const petalTypes = [
     "Bur", // 15
     "Stinger",
     "Golden Leaf",
-    "Bubble"
+    "Bubble", 
+    "Poo", 
+    "Talisman"
 ]
 
 export const petalStats = [
@@ -159,9 +161,25 @@ export const petalStats = [
     },
     {
         name: "Bubble",
-        description: "Chance to allow you to move through a zone without clearing.",
+        description: "Allows you to move through a zone without clearing, but taking damage from all mobs.",
         damage: 0,
         heal: 0,
         max_health: 0
+    },
+    {
+        name: "Poo",
+        description: "All mobs have a chance to not attack you.",
+        damage: 0,
+        heal: 0,
+        max_health: 0, 
+        smell: 0.03 // 3% chance to not attack + 3% per rarity
+    },
+    {
+        name: "Talisman",
+        description: "A single mob has a chance to not attack you.",
+        damage: 0,
+        heal: 0,
+        max_health: 0, 
+        evasion: 0.15 // 20% chance to not attack + 10% per rarity
     }
 ]
