@@ -50,26 +50,54 @@ function saveData() {
 // Gets the petal type from a petal string. Petal string is
 // "n_m" where n is the id and m is the rarity
 function getPetalType(petal) {
-    return petalTypes[petal.split("_")[0]];
+    return petalTypes[petal];
 }
 
 // Gets the petal rarity
 function getPetalRarity(petal) {
-    return petalRarities[petal.split("_")[1]];
+    return petalRarities[petal];
 }
 
 // Gets the petal dmg
-function getPetalDamage(petal) {
-    return petalStats[petal.split("_")[0]].damage * (3 ** petal.split("_")[1]);
+function getPetalDamage(petal, rarity) {
+    return petalStats[petal].damage * (3 ** rarity);
 }
 
 // Returns a string of the petal, like "Common Light (2 Damage): 5x"
 function petalToText(petal, inter, includeNumber = true) {
-    let number = data[inter.user.id].inventory[petal];
-    let petalType = getPetalType(petal);
-    let petalRarity = getPetalRarity(petal);
-    let petalDamageValue = getPetalDamage(petal);
-    return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)${includeNumber ? ": " + number + "x" : ""}\n`;
+    let petalAmounts = data[inter.user.id].inventory[petal];
+    
+    // check if user has any of the petal
+    let hasPetal = false;
+    for (let i = 0; i < petalAmounts.length; i++) {
+        if (petalAmounts[i] > 0) {
+            hasPetal = true;
+            break;
+        }
+    }
+    if (!hasPetal) {
+        return "";
+    }
+
+    // get petal type
+
+    let petalStrings = [];
+    for (let i = 0; i < petalAmounts.length; i++) {
+        if(petalAmounts[i] > 0) {
+            let petalRarity = petalRarities[i];
+            let petalDamageValue = getPetalDamage(petal, i);
+            petalStrings.push(`- - ${petalRarity} (${petalDamageValue} Damage): ${petalAmounts[i]}x`);
+        }
+    }
+
+    return "- " + petalTypes[petal] + "\n" + petalStrings.join("\n") + "\n";
+}
+
+function singlePetalToText(petal, inter) {
+    let petalRarity = getPetalRarity(petal.split("_")[1]);
+    let petalType = petalTypes[petal.split("_")[0]];
+    let petalDamageValue = getPetalDamage(petal.split("_")[0], petal.split("_")[1]);
+    return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)\n`;
 }
 
 // Load data
@@ -254,6 +282,7 @@ client.on('interactionCreate', (interaction) => {
 
         // print inventory
         for (const petal in data[inter.user.id].inventory) {
+            console.log(petal)
             inventoryText += petalToText(petal, inter);
         }
 
@@ -265,7 +294,7 @@ client.on('interactionCreate', (interaction) => {
                 loadoutText += `- Empty Slot!\n`;
                 continue;
             }
-            loadoutText += petalToText(petal, inter, false);
+            loadoutText += singlePetalToText(petal, inter);
         }
 
         // print final text
