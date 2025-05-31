@@ -994,7 +994,7 @@ client.on('interactionCreate', (interaction) => {
         for (const [stat, val] of Object.entries(petalStats[petal])) {
             if(val <= 0 && stat != "damage") continue;
             if(stat == "rotation") {
-                statsText += `**${stat}:** ${val * rarity}\n`
+                statsText += `**${stat}:** ${val * (rarity + 1)}\n`
                 continue;
             }
             if(Number.isFinite(parseInt(val))) {
@@ -1082,7 +1082,7 @@ client.on('interactionCreate', (interaction) => {
                 let extraInfo = "";
                 let doubleDamage = false;
                 if(data[user.id]["loadout"].includes(9)) {
-                    doubleDamage = (Math.random() < (petalStats[9].rotation * data[user.id].inventory["9"]));
+                    doubleDamage = (Math.random() < (petalStats[9].rotation * (data[user.id].inventory["9"] + 1)));
                 }
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
