@@ -72,6 +72,10 @@ export const commands = [
                     {
                         name: "Desert",
                         value: "desert"
+                    },
+                    {
+                        name: "Jungle",
+                        value: "jungle"
                     }
                 ]
             }

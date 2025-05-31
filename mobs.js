@@ -39,6 +39,18 @@ export const biomes = {
             "Baby Ant", 
             "Queen Ant"
         ]
+    },
+    "jungle": {
+        name: "Jungle",
+        mobs: [
+            // "Mantis",
+            "Leafbug"
+            // "Dark Ladybug",
+            // "Wasp",
+            // "Soldier Termite",
+            // "Firefly",
+            // "Bush"
+        ]
     }
 }
 export const mobStats = {
@@ -160,5 +172,54 @@ export const mobStats = {
         loot: 4, 
         petalDrop: 5, 
         reroll: true
+    },
+    "Mantis": {
+        health: 6, 
+        damage: 2, 
+        loot: 2, 
+        petalDrop: 0, 
+        reroll: false
+    },
+    "Leafbug": {
+        health: 10,
+        damage: 1.5,
+        loot: 3,
+        petalDrop: 14,
+        reroll: false
+    },
+    "Dark Ladybug": {
+        health: 4,
+        damage: 1,
+        loot: 1.5,
+        petalDrop: 0,
+        reroll: false
+    },
+    "Wasp": {
+        health: 3,
+        damage: 3,
+        loot: 2,
+        petalDrop: 0,
+        reroll: false
+    },
+    "Soldier Termite": {
+        health: 10,
+        damage: 0.5,
+        loot: 3,
+        petalDrop: 0,
+        reroll: true
+    },
+    "Firefly": {
+        health: 3,
+        damage: 1,
+        loot: 2,
+        petalDrop: 0,
+        reroll: false
+    },
+    "Bush": {
+        health: 10,
+        damage: 0,
+        loot: 2,
+        petalDrop: 0,
+        reroll: false
     }
 }

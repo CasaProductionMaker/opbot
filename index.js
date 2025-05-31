@@ -330,7 +330,7 @@ client.on('interactionCreate', (interaction) => {
                 loot: mobStats[mobs[i]].loot,
                 rarity: petalRarities[petalLowercaseRarities.indexOf(rarity)], 
                 health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
-                damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity)), 
+                damage: Math.ceil(mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity))), 
                 dead: false
             }
         }
@@ -578,6 +578,7 @@ client.on('interactionCreate', (interaction) => {
                 return;
             }
 
+            // calculate petal dmg
             if(data[user.id]["grind-info"].mobs[mobToAttack].health > 0) {
                 let totalPlayerDamage = 0;
                 let extraInfo = "";
@@ -585,6 +586,7 @@ client.on('interactionCreate', (interaction) => {
                 if(data[user.id]["loadout"].includes(9)) {
                     doubleDamage = (Math.random() < (petalStats[9].rotation * (data[user.id].inventory["9"] + 1)));
                 }
+                
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
                     for (const petal of data[user.id]["loadout"]) {
                         p_id = petal.split("_")[0];
@@ -618,11 +620,28 @@ client.on('interactionCreate', (interaction) => {
                 if(data[user.id]["health"] > data[user.id]["max_health"]) {
                     data[user.id]["health"] = data[user.id]["max_health"]
                 }
-                data[user.id]["grind-info"].mobs[mobToAttack].health -= totalPlayerDamage;
+
+                // check mob armour
+                if(data[user.id]["grind-info"].mobs[mobToAttack].armour) {
+                    totalPlayerDamage -= data[user.id]["grind-info"].mobs[mobToAttack].armour;
+                }
+                // apply dmg
+                data[user.id]["grind-info"].mobs[mobToAttack].health -= Math.floor(totalPlayerDamage)   ;
                 saveData();
 
                 updatedComponents = interaction.message.components;
-                //All mobs update
+
+                // calculate player armour
+                let armour = 0;
+                for (let i = 0; i < data[user.id]["loadout"].length; i++) {
+                    if(data[user.id]["loadout"][i] != -1 && petalStats[data[user.id]["loadout"][i].split("_")[0]].armour) {
+                        armour += petalStats[data[user.id]["loadout"][i].split("_")[0]].armour * (3 ** (data[user.id]["loadout"][i].split("_")[1] || 0));
+                    }
+                }
+                armour = Math.floor(armour);
+                console.log("Armour: " + armour);
+
+                // All mobs update
                 let totalDamage = 0;
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                     if(data[user.id]["grind-info"].mobs[i].health > 0) {
@@ -654,7 +673,7 @@ client.on('interactionCreate', (interaction) => {
                         updatedComponents = [row];
                     }
                 }
-                data[user.id]["health"] -= totalDamage;
+                data[user.id]["health"] -= totalDamage - armour;
                 saveData();
                 if (data[user.id]["health"] <= 0) {
                     delete data[user.id]["grind-info"];
@@ -675,9 +694,12 @@ client.on('interactionCreate', (interaction) => {
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                         totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
                         const randomLootDropChance = Math.random() * 2;
+                        console.log("randomLootDropChance: " + randomLootDropChance);
                         if(randomLootDropChance <= 1.0) {
                             const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
                             let petalToDrop = mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop;
+                            console.log("petalToDrop: " + petalToDrop);
+                            console.log("grindRarity: " + grindRarity);
                             if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
                                 petalToDrop += "_" + (grindRarity - 2);
                             } else if(randomLootDropChance <= dropRarityChances[grindRarity][1]) {
@@ -1042,6 +1064,16 @@ client.on('interactionCreate', (interaction) => {
                 petalsSoFar++;
             }
 
+            // Special msg if no petals left in inventory
+            if (petalsSoFar == 0) {
+                interaction.update({
+                    content: `You have no ${petalTypes[petal]} left in your inventory!`, 
+                    components: [], 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
             interaction.update({
                 content: `Which ${petalTypes[petal]} do you want to put in slot ${slot+1}?`, 
                 components: rows, 
@@ -1084,7 +1116,6 @@ client.on('interactionCreate', (interaction) => {
             let rows = [];
             let petalsSoFar = 0;
             for (const rarity in data[user.id]["inventory"][petalToSlotIn]) {
-                console.log("Petal", rarity);
                 if(data[user.id]["inventory"][petalToSlotIn][rarity] <= 0) continue; // skip if no petals of this rarity
                 if(petalsSoFar % 5 == 0) {
                     rows.push(new ActionRowBuilder());
@@ -1110,6 +1141,8 @@ client.on('interactionCreate', (interaction) => {
                         .setStyle(style)
                         .setDisabled(dis)
                 );
+                
+                console.log("Rarity increment", rarity);
                 petalsSoFar++;
             }
 
@@ -1118,6 +1151,16 @@ client.on('interactionCreate', (interaction) => {
                 interaction.update({
                     content: `You already have one of this petal in slot ${slotID+1}!`, 
                     components: rows, 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
+            // Special msg if no petals left in inventory
+            if (petalsSoFar == 0) {
+                interaction.update({
+                    content: `You have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
+                    components: [], 
                     flags: MessageFlags.Ephemeral
                 })
                 return;

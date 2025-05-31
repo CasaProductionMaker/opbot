@@ -16,7 +16,8 @@ export const petalTypes = [
     "Cactus", // 10
     "Lightning", 
     "Glass", 
-    "Rose"
+    "Rose",
+    "Root"
 ]
 
 export const petalStats = [
@@ -118,5 +119,13 @@ export const petalStats = [
         damage: 0, 
         heal: 4, 
         max_health: 0
+    },
+    {
+        name: "Root",
+        description: "Grants some armour against attacks.",
+        damage: 2,
+        heal: 0,
+        max_health: 0,
+        armour: 0.6
     }
 ]
