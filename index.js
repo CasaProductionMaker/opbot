@@ -605,6 +605,26 @@ client.on('interactionCreate', (interaction) => {
                         break;
                     }
                 }
+
+                // do bubble check
+                let bubbleRarity = -1;
+                for (const petal of data[user.id]["loadout"]) {
+                    if(petal.split("_")[0] == 18) {
+                        bubbleRarity = petal.split("_")[1];
+                        break;
+                    }
+                }
+
+                let skipChance = 0;
+                let grindRarity = petalRarities.indexOf(data[user.id]["grind-info"].rarity);
+                if (bubbleRarity - grindRarity > 3) {
+                    skipChance = 1 
+                } else if (bubbleRarity - grindRarity > 0) {
+                    skipChance = 1 - 4 ** (- bubbleRarity + grindRarity);
+                    // around 67% chance to skip 1 rarity below. per hit
+                    // around 88% chance to skip 2 rarities below
+                    // around 96% chance to skip 3 rarities below
+                }
                
                 // check all petals for dmg and heals
                 for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
@@ -730,9 +750,16 @@ client.on('interactionCreate', (interaction) => {
                                 )
                             }
                         }
-                        updatedComponents = [row];
                     }
                 }
+                const newRow = new ActionRowBuilder();
+                newRow.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId("higher-rarity")
+                        .setLabel("Go to higher rarity zone")
+                        .setStyle(ButtonStyle.Success)
+                )
+
                 data[user.id]["health"] -= totalDamage - armour;
                 saveData();
                 if (data[user.id]["health"] <= 0) {

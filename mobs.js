@@ -145,6 +145,14 @@ export const mobStats = {
         petalDrop: 0, 
         reroll: false
     },
+    "Bubble": {
+        health: 1,
+        damage: 0,
+        loot: 1,
+        petalDrop: 0,
+        armour: 1,
+        reroll: true
+    },
     "Soldier Ant": {
         health: 8, 
         damage: 1, 

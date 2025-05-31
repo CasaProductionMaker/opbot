@@ -20,7 +20,8 @@ export const petalTypes = [
     "Root",
     "Bur", // 15
     "Stinger",
-    "Golden Leaf"
+    "Golden Leaf",
+    "Bubble"
 ]
 
 export const petalStats = [
@@ -155,5 +156,12 @@ export const petalStats = [
         heal: 0,
         max_health: 0,
         dmg_increase: 0.25
+    },
+    {
+        name: "Bubble",
+        description: "Chance to allow you to move through a zone without clearing.",
+        damage: 0,
+        heal: 0,
+        max_health: 0
     }
 ]
