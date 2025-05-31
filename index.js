@@ -1055,8 +1055,31 @@ client.on('interactionCreate', (interaction) => {
             const petalToSlotIn = interaction.customId.split("-")[2];
             const petalRarity = interaction.customId.split("-")[3];
 
-            data[user.id]["loadout"][slotID] = `${petalToSlotIn}_${petalRarity}`;
-            saveData();
+            // safeguard against double slotting. Bool value used after buttons are updated (down below)
+            let alreadyEquipped = false;
+            for (let i = 0; i < data[user.id]["loadout"].length; i++) {
+                if(data[user.id]["loadout"][i] == `${petalToSlotIn}_${petalRarity}`) {
+                    alreadyEquipped = true;
+                    break;
+                }
+            }
+            
+            if(!alreadyEquipped) {
+                // Remove petal from slot, put in inventory
+                let slotPetal = data[user.id]["loadout"][slotID].split("_")[0];
+                let slotPetalRarity = data[user.id]["loadout"][slotID].split("_")[1];
+                if(slotPetal != "-1") {
+                    data[user.id]["inventory"][slotPetal][slotPetalRarity]++;
+                }
+                
+                // Add petal to slot from inventory
+                data[user.id]["loadout"][slotID] = `${petalToSlotIn}_${petalRarity}`;
+                if(data[user.id]["inventory"][petalToSlotIn][petalRarity] > 0) {
+                    data[user.id]["inventory"][petalToSlotIn][petalRarity]--;
+                }
+                saveData();
+            }
+            
 
             let rows = [];
             let petalsSoFar = 0;
@@ -1090,6 +1113,17 @@ client.on('interactionCreate', (interaction) => {
                 petalsSoFar++;
             }
 
+            // if the petal is already equipped, dont do the slotting
+            if(alreadyEquipped) {
+                interaction.update({
+                    content: `You already have one of this petal in slot ${slotID+1}!`, 
+                    components: rows, 
+                    flags: MessageFlags.Ephemeral
+                })
+                return;
+            }
+
+            // otherwise keep msg
             interaction.update({
                 content: `Which ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
                 components: rows, 
