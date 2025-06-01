@@ -42,3 +42,6 @@ export const talentCosts = {
     "evasion": [],
     "max_hp": [10, 50, 250, 1250, 6250, 31250, 156250, 444444]
 }
+
+export const rareMobSpawn = 0.05;
+export const rareLootChance = 0.05;

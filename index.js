@@ -438,11 +438,13 @@ client.on('interactionCreate', (interaction) => {
             mobs.push(mob);
         }
         let mobInfo = [];
+        let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+        if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
         for (let i = 0; i < mobs.length; i++) {
             mobInfo[i] = {
                 name: mobs[i],
                 loot: mobStats[mobs[i]].loot,
-                rarity: petalRarities[petalLowercaseRarities.indexOf(rarity)], 
+                rarity: mob_rarity, 
                 health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
                 damage: Math.ceil(mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity))), 
                 dead: false
@@ -944,7 +946,7 @@ client.on('interactionCreate', (interaction) => {
                 if (data[user.id]["grind-info"].mobsLeft <= 0) {
                     let totalXP = 0;
                     let petalDrops = [];
-                    let gotRareLoot = Math.random() < 0.05;
+                    let gotRareLoot = Math.random() < constants.rareLootChance;
 
                     // calc petal drops
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
@@ -1144,11 +1146,13 @@ client.on('interactionCreate', (interaction) => {
                 mobs.push(mob);
             }
             let mobInfo = [];
+            let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+            if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
             for (let i = 0; i < mobs.length; i++) {
                 mobInfo[i] = {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
-                    rarity: petalRarities[petalLowercaseRarities.indexOf(rarity)], 
+                    rarity: mob_rarity, 
                     health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
                     damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity)), 
                     dead: false
@@ -1213,11 +1217,13 @@ client.on('interactionCreate', (interaction) => {
                 mobs.push(mob);
             }
             let mobInfo = [];
+            let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+            if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
             for (let i = 0; i < mobs.length; i++) {
                 mobInfo[i] = {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
-                    rarity: petalRarities[petalLowercaseRarities.indexOf(rarity)], 
+                    rarity: mob_rarity, 
                     health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
                     damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity))
                 }
