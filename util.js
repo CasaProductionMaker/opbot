@@ -32,7 +32,8 @@ export function fillInProfileBlanks(profile) {
         if(profile.loadout[i].split("_")[0] == "-1") continue;
         totalMH += petalStats[profile.loadout[i].split("_")[0]].max_health * (3 ** profile.loadout[i].split("_")[1]);
     }
-    profile.max_health = Math.floor(Math.sqrt(5 * profile.xp) + 30) + totalMH;
+    let maxHPMultiplier = 1+0.1*profile.talents.max_hp;
+    profile.max_health = Math.floor((Math.sqrt(5 * profile.xp) + 30)*maxHPMultiplier) + totalMH;
     return profile;
 }
 export function getCraftCost(rarity) {

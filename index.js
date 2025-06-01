@@ -513,6 +513,7 @@ client.on('interactionCreate', (interaction) => {
 
         // print loadout
         let loadoutText = makeLoadoutText(inter.user.id);
+        let secondaryLoadoutText = makeLoadoutText(inter.user.id, true);
 
         // print final text
         let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
@@ -1758,6 +1759,21 @@ client.on('interactionCreate', (interaction) => {
             
             interaction.update({
                 content: `You have leveled up your loadout for ${starCost} stars!`, 
+                components: [], 
+                flags: MessageFlags.Ephemeral
+            })
+        } else if (interaction.customId === 'max_hp-talent') {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+            let starCost = constants.talentCosts.max_hp[data[user.id]["talents"]["max_hp"]]
+            data[user.id]["stars"] -= starCost;
+            data[user.id]["talents"]["max_hp"]++;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+            
+            interaction.update({
+                content: `You have leveled up your max hp for ${starCost} stars!`, 
                 components: [], 
                 flags: MessageFlags.Ephemeral
             })
