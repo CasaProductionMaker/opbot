@@ -143,10 +143,12 @@ function singlePetalToText(petal) {
     return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)\n`;
 }
 
-function makeLoadoutText(userid) {
+// Display text for loadout
+function makeLoadoutText(userid, secondary = false) {
     let loadoutText = "";
-    for (const i in data[userid].loadout) {
-        const petal = data[userid].loadout[i];
+    let loadout = secondary ? data[userid].second_loadout : data[userid].loadout;
+    for (const i in loadout) {
+        const petal = loadout[i];
         if (petal.split("_")[0] == "-1") {
             loadoutText += `- Empty Slot!\n`;
             continue;
@@ -483,24 +485,8 @@ client.on('interactionCreate', (interaction) => {
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
 
-        let loadoutText = "";
-        for (const i in data[inter.user.id].loadout) {
-            const petal = data[inter.user.id].loadout[i];
-            if (petal.split("_")[0] == "-1") {
-                loadoutText += `- Empty Slot!\n`;
-                continue;
-            }
-            loadoutText += singlePetalToText(petal, inter);
-        }
-        let secondaryLoadoutText = "";
-        for (const i in data[inter.user.id].second_loadout) {
-            const petal = data[inter.user.id].second_loadout[i];
-            if (petal.split("_")[0] == "-1") {
-                secondaryLoadoutText += `- Empty Slot!\n`;
-                continue;
-            }
-            secondaryLoadoutText += singlePetalToText(petal, inter);
-        }
+        let loadoutText = makeLoadoutText(inter.user.id);
+        let secondaryLoadoutText = makeLoadoutText(inter.user.id, true);
 
         interaction.reply({
             content: `**Loadout of ${inter.user.username}**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`,
@@ -526,18 +512,10 @@ client.on('interactionCreate', (interaction) => {
         }
 
         // print loadout
-        let loadoutText = "";
-        for (const i in data[inter.user.id].loadout) {
-            const petal = data[inter.user.id].loadout[i];
-            if (petal.split("_")[0] == "-1") {
-                loadoutText += `- Empty Slot!\n`;
-                continue;
-            }
-            loadoutText += singlePetalToText(petal, inter);
-        }
+        let loadoutText = makeLoadoutText(inter.user.id);
 
         // print final text
-        let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}`;
+        let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
         interaction.reply({
             content: finalText
         });
@@ -1659,15 +1637,7 @@ client.on('interactionCreate', (interaction) => {
             }
 
             // otherwise keep msg
-            let loadoutText = "";
-            for (const i in data[user.id].loadout) {
-                const petal = data[user.id].loadout[i];
-                if (petal.split("_")[0] == "-1") {
-                    loadoutText += `- Empty Slot!\n`;
-                    continue;
-                }
-                loadoutText += singlePetalToText(petal, interaction);
-            }
+            let loadoutText = makeLoadoutText(user.id);
             interaction.update({
                 content: `**New loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
                 components: rows, 
@@ -1769,15 +1739,7 @@ client.on('interactionCreate', (interaction) => {
             }
 
             // otherwise keep msg
-            let loadoutText = "";
-            for (const i in data[user.id].loadout) {
-                const petal = data[user.id].loadout[i];
-                if (petal.split("_")[0] == "-1") {
-                    loadoutText += `- Empty Slot!\n`;
-                    continue;
-                }
-                loadoutText += singlePetalToText(petal, interaction);
-            }
+            let loadoutText = makeLoadoutText(user.id, true);
             interaction.update({
                 content: `**New secondary loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
                 components: rows, 
@@ -1813,24 +1775,8 @@ client.on('interactionCreate', (interaction) => {
             saveData();
 
             // create loadout text
-            let loadoutText = "";
-            for (const i in data[user.id].loadout) {
-                const petal = data[user.id].loadout[i];
-                if (petal.split("_")[0] == "-1") {
-                    loadoutText += `- Empty Slot!\n`;
-                    continue;
-                }
-                loadoutText += singlePetalToText(petal, interaction);
-            }
-            let secondaryLoadoutText = "";
-            for (const i in data[user.id].second_loadout) {
-                const petal = data[user.id].second_loadout[i];
-                if (petal.split("_")[0] == "-1") {
-                    secondaryLoadoutText += `- Empty Slot!\n`;
-                    continue;
-                }
-                secondaryLoadoutText += singlePetalToText(petal, interaction);
-            }
+            let loadoutText = makeLoadoutText(user.id);
+            let secondaryLoadoutText = makeLoadoutText(user.id, true);
 
             interaction.reply({
                 content: `Swapped loadout slot ${slot + 1} with secondary loadout slot ${slot + 1}.\n**Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`, 
