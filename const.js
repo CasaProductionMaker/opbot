@@ -43,5 +43,5 @@ export const talentCosts = {
     "max_hp": [10, 50, 250, 1250, 6250, 31250, 156250, 444444]
 }
 
-export const rareMobSpawn = 0.05;
+export const rareMobSpawn = 0.05; // chance for mob to be 1 rarity above
 export const rareLootChance = 0.05;

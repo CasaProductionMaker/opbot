@@ -438,9 +438,9 @@ client.on('interactionCreate', (interaction) => {
             mobs.push(mob);
         }
         let mobInfo = [];
-        let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
-        if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
         for (let i = 0; i < mobs.length; i++) {
+            let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+            if(Math.random() < constants.rareMobSpawn) mob_rarity = Math.min(petalRarities[petalLowercaseRarities.indexOf(rarity) + 1], 6);
             mobInfo[i] = {
                 name: mobs[i],
                 loot: mobStats[mobs[i]].loot,
@@ -1146,9 +1146,9 @@ client.on('interactionCreate', (interaction) => {
                 mobs.push(mob);
             }
             let mobInfo = [];
-            let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
-            if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
             for (let i = 0; i < mobs.length; i++) {
+                let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+                if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[Math.min(petalLowercaseRarities.indexOf(rarity) + 1, 6)];
                 mobInfo[i] = {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
@@ -1217,9 +1217,9 @@ client.on('interactionCreate', (interaction) => {
                 mobs.push(mob);
             }
             let mobInfo = [];
-            let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
-            if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity) + 1];
             for (let i = 0; i < mobs.length; i++) {
+                let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
+                if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[Math.min(petalLowercaseRarities.indexOf(rarity) + 1, 6)];
                 mobInfo[i] = {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
