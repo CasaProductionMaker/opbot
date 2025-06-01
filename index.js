@@ -83,12 +83,28 @@ function pooRepelAmount(userid) {
         pooModifier = -1 // always remove 1 mob
         if(Math.random() < pooRarity/8) { // chance to remove 2 mobs
             pooModifier -= 1
-            if(Math.random() < pooRarity/12) { // chance to remove 3 mobs
+            if(Math.random() < pooRarity/16) { // chance to remove 3 mobs
                 pooModifier -= 1
             }
         }
     }
     return pooModifier;
+}
+
+// same as above but for honey
+function honeyAttractAmount(userid) {
+    let honeyRarity = isPetalEquipped(21, userid);
+    let honeyModifier = 0;
+    if (honeyRarity >= 0) {
+        honeyModifier = 1 // always add 1 mob
+        if(Math.random() < honeyRarity/8) { // chance to add 2 mobs
+            honeyModifier += 1
+            if(Math.random() < honeyRarity/16) { // chance to add 3 mobs
+                honeyModifier += 1
+            }
+        }
+    }
+    return honeyModifier;
 }
 
 // Returns a string of the petal, like "Common Light (2 Damage): 5x"
@@ -120,11 +136,24 @@ function petalToText(petal, inter, includeNumber = true) {
     return "- " + petalTypes[petal] + "\n" + petalStrings.join("\n") + "\n";
 }
 
-function singlePetalToText(petal, inter) {
+function singlePetalToText(petal) {
     let petalRarity = getPetalRarity(petal.split("_")[1]);
     let petalType = petalTypes[petal.split("_")[0]];
     let petalDamageValue = getPetalDamage(petal.split("_")[0], petal.split("_")[1]);
     return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)\n`;
+}
+
+function makeLoadoutText(userid) {
+    let loadoutText = "";
+    for (const i in data[userid].loadout) {
+        const petal = data[userid].loadout[i];
+        if (petal.split("_")[0] == "-1") {
+            loadoutText += `- Empty Slot!\n`;
+            continue;
+        }
+        loadoutText += singlePetalToText(petal);
+    }
+    return loadoutText;
 }
 
 // Load data
@@ -393,6 +422,7 @@ client.on('interactionCreate', (interaction) => {
 
         // check for poo and honey
         mobAmount += pooRepelAmount(user.id);
+        mobAmount += honeyAttractAmount(user.id);
         mobAmount = Math.max(mobAmount, 1);
         console.log("mob amount after poo: " + mobAmount);
 
@@ -564,7 +594,7 @@ client.on('interactionCreate', (interaction) => {
         }
         
         interaction.reply({
-            content: `Which slot do you want to update?`, 
+            content: `Which slot do you want to update?\n\nCurrent Loadout:\n${makeLoadoutText(user.id)}`, 
             components: [row], 
             flags: MessageFlags.Ephemeral
         })
@@ -1122,6 +1152,7 @@ client.on('interactionCreate', (interaction) => {
             
             // check for poo and honey
             mobAmount += pooRepelAmount(user.id);
+            mobAmount += honeyAttractAmount(user.id);
             mobAmount = Math.max(mobAmount, 1);
             
             let mobs = [];
@@ -1190,6 +1221,7 @@ client.on('interactionCreate', (interaction) => {
             
             // check for poo and honey
             mobAmount += pooRepelAmount(user.id);
+            mobAmount += honeyAttractAmount(user.id);
             mobAmount = Math.max(mobAmount, 1);
             
             let mobs = [];

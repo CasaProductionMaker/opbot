@@ -23,7 +23,8 @@ export const petalTypes = [
     "Golden Leaf",
     "Bubble", 
     "Poo", 
-    "Talisman" // 20
+    "Talisman", // 20
+    "Honey"
 ]
 
 export const petalStats = [
@@ -168,7 +169,7 @@ export const petalStats = [
     },
     {
         name: "Poo",
-        description: "All mobs have a chance to not attack you.",
+        description: "Reduces the number of mobs that attack you.",
         damage: 0,
         heal: 0,
         max_health: 0, 
@@ -181,5 +182,12 @@ export const petalStats = [
         heal: 0,
         max_health: 0, 
         evasion: 0.15 // 20% chance to not attack + 10% per rarity
+    },
+    {
+        name: "Honey",
+        description: "Its sweet smell attracts more mobs toward you.",
+        damage: 0,
+        heal: 0,
+        max_health: 0
     }
 ]

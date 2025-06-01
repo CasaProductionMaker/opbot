@@ -75,7 +75,7 @@ export const mobStats = {
         health: 4, 
         damage: 3, 
         loot: 2, 
-        petalDrop: [0], 
+        petalDrop: [21], 
         reroll: false
     }, 
     "Rock": {
