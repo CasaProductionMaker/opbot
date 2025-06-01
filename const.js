@@ -3,15 +3,15 @@
 // Edited by stormlet on 5/29/2025
 
 export const petalRarities = [
-    "Common",
-    "Unusual",
-    "Rare",
-    "Epic",
-    "Legendary",
-    "Mythic",
-    "Ultra",
-    "Super",
-    "Unique"
+    "Common",       // 0
+    "Unusual",      // 1
+    "Rare",         // 2
+    "Epic",         // 3
+    "Legendary",    // 4
+    "Mythic",       // 5
+    "Ultra",        // 6
+    "Super",        // 7
+    "Unique"        // 8
 ];
 
 export const petalCraftChances = [

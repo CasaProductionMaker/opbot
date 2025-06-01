@@ -23,7 +23,7 @@ export const petalTypes = [
     "Golden Leaf",
     "Bubble", 
     "Poo", 
-    "Talisman"
+    "Talisman" // 20
 ]
 
 export const petalStats = [

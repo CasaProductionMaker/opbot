@@ -11,6 +11,7 @@ let data = {};
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
 const { deserialize } = require('v8');
 const { type } = require('os');
+const { get } = require('http');
 
 // Create client obj
 const client = new Client({
@@ -61,6 +62,33 @@ function getPetalRarity(petal) {
 // Gets the petal dmg
 function getPetalDamage(petal, rarity) {
     return Math.floor(petalStats[petal].damage * (3 ** rarity));
+}
+
+// checks if a petal is equipped. If yes, returns rarity; else returns -1
+function isPetalEquipped(petal, userid) {
+    for (const p of data[userid]["loadout"]) {
+        if(p.split("_")[0] == petal) {
+            return p.split("_")[1]
+        }
+    }
+    return -1;
+}
+
+// generates number of mobs to shoo away with poo
+function pooRepelAmount(userid) {
+    // check for poo and honey
+    let pooRarity = isPetalEquipped(19, userid);
+    let pooModifier = 0;
+    if (pooRarity >= 0) {
+        pooModifier = -1 // always remove 1 mob
+        if(Math.random() < pooRarity/8) { // chance to remove 2 mobs
+            pooModifier -= 1
+            if(Math.random() < pooRarity/12) { // chance to remove 3 mobs
+                pooModifier -= 1
+            }
+        }
+    }
+    return pooModifier;
 }
 
 // Returns a string of the petal, like "Common Light (2 Damage): 5x"
@@ -346,6 +374,7 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
+
     if (interaction.commandName === 'grind') {
         const biome = interaction.options.get('biome');
         const rarity = "common";
@@ -358,7 +387,15 @@ client.on('interactionCreate', (interaction) => {
             return;
         }
 
+
         let mobAmount = Math.min(Math.round(Math.random() * petalLowercaseRarities.indexOf(rarity) + 2), 5);
+        console.log("mobAmount: " + mobAmount);
+
+        // check for poo and honey
+        mobAmount += pooRepelAmount(user.id);
+        mobAmount = Math.max(mobAmount, 1);
+        console.log("mob amount after poo: " + mobAmount);
+
         let mobs = [];
         for (let i = 0; i < mobAmount; i++) {
             let randomID = Math.floor(Math.random() * biomes[biome.value].mobs.length);
@@ -730,20 +767,6 @@ client.on('interactionCreate', (interaction) => {
                     }
                 }
 
-                // check if user has poo
-                let pooChance = 0;
-                for (const petal of data[user.id]["loadout"]) {
-                    if(petal.split("_")[0] == 19) {
-                        pooChance = petalStats[19].smell + (0.03 * (petal.split("_")[1] || 0));
-                    }
-                }
-                if(Math.random() < pooChance) {
-                    // apply poo effect
-                    pooChance = 1;
-                } else {
-                    pooChance = 0;
-                }
-
                 // check if user has talisman
                 let talismanChance = 0;
                 for (const petal of data[user.id]["loadout"]) {
@@ -853,11 +876,11 @@ client.on('interactionCreate', (interaction) => {
                 // All mobs update
                 let totalDamage = 0;
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
-                    // if mob is not dead and poo is not warding it
-                    if(data[user.id]["grind-info"].mobs[i].health > 0 && pooChance < 1) {
+                    // if mob is not dead
+                    if(data[user.id]["grind-info"].mobs[i].health > 0) {
                         if(Math.random() < talismanChance) {
                             // if talisman equipped, chance to not take damage
-                            extraInfo += `\nYour Poo has warded a mob from you!`;
+                            extraInfo += `\nYour Talisman has warded a mob from you!`;
                             continue;
                         }
                         // do damage
@@ -1096,6 +1119,11 @@ client.on('interactionCreate', (interaction) => {
             }
 
             let mobAmount = Math.min(Math.round(Math.random() * petalLowercaseRarities.indexOf(rarity) + 2), 5);
+            
+            // check for poo and honey
+            mobAmount += pooRepelAmount(user.id);
+            mobAmount = Math.max(mobAmount, 1);
+            
             let mobs = [];
             for (let i = 0; i < mobAmount; i++) {
                 let randomID = Math.floor(Math.random() * biomes[biome].mobs.length);
@@ -1159,6 +1187,11 @@ client.on('interactionCreate', (interaction) => {
             }
 
             let mobAmount = Math.min(Math.round(Math.random() * petalLowercaseRarities.indexOf(rarity) + 2), 5);
+            
+            // check for poo and honey
+            mobAmount += pooRepelAmount(user.id);
+            mobAmount = Math.max(mobAmount, 1);
+            
             let mobs = [];
             for (let i = 0; i < mobAmount; i++) {
                 let randomID = Math.floor(Math.random() * biomes[biome].mobs.length);
