@@ -14,6 +14,9 @@ export const petalRarities = [
     "Unique"        // 8
 ];
 
+
+export const petalLowercaseRarities = petalRarities.map(s => s.toLowerCase());
+
 export const petalCraftChances = [
     0.64,
     0.32,

@@ -108,3 +108,58 @@ export function makeLoadoutText(userid, data, secondary = false) {
     }
     return loadoutText;
 }
+
+
+
+// checks if a petal is equipped. If yes, returns rarity; else returns -1
+export function isPetalEquipped(petal, userid, data) {
+    for (const p in data[userid]["loadout"]) {
+        if(p.split("_")[0] == petal) {
+            return p.split("_")[1]
+        }
+    }
+    return -1;
+}
+
+// generates number of mobs to shoo away with poo
+export function pooRepelAmount(userid, data) {
+    // check for poo and honey
+    let pooRarity = isPetalEquipped(19, userid, data);
+    let pooModifier = 0;
+    if (pooRarity >= 0) {
+        pooModifier = -1 // always remove 1 mob
+        if(Math.random() < pooRarity/8) { // chance to remove 2 mobs
+            pooModifier -= 1
+            if(Math.random() < pooRarity/16) { // chance to remove 3 mobs
+                pooModifier -= 1
+            }
+        }
+    }
+    return pooModifier;
+}
+
+// same as above but for honey
+export function honeyAttractAmount(userid, data) {
+    let honeyRarity = isPetalEquipped(21, userid, data);
+    let honeyModifier = 0;
+    if (honeyRarity >= 0) {
+        honeyModifier = 1 // always add 1 mob
+        if(Math.random() < honeyRarity/8) { // chance to add 2 mobs
+            honeyModifier += 1
+            if(Math.random() < honeyRarity/16) { // chance to add 3 mobs
+                honeyModifier += 1
+            }
+        }
+    }
+    return honeyModifier;
+}
+
+export function saveData(data) {
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 4));
+}
+
+export function editXP(userid, amount, data) {
+    let xp = data[userid]["xp"] || 0;
+    data[userid]["xp"] = xp + amount;
+    saveData(data);
+}

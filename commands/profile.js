@@ -3,7 +3,7 @@ const util = require('../util')
 module.exports = {
     name: 'profile',
     description: 'Shows your profile',
-    execute(interaction, data, saveData, makeLoadoutText) {
+    execute(interaction, data, saveData, onlyLoadout = false) {
         
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
@@ -27,7 +27,13 @@ module.exports = {
         let secondaryLoadoutText = util.makeLoadoutText(inter.user.id, data, true);
 
         // print final text
-        let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
+        let finalText = ""
+        if(onlyLoadout) {
+            finalText = `**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
+        } else {
+            finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
+        }
+    
         interaction.reply({
             content: finalText
         });
