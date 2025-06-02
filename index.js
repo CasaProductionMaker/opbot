@@ -447,8 +447,8 @@ client.on('interactionCreate', (interaction) => {
                 name: mobs[i],
                 loot: mobStats[mobs[i]].loot,
                 rarity: mob_rarity, 
-                health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
-                damage: Math.ceil(mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity))), 
+                health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(mob_rarity)), 
+                damage: Math.ceil(mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(mob_rarity))), 
                 dead: false
             }
         }
@@ -1269,8 +1269,8 @@ client.on('interactionCreate', (interaction) => {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
                     rarity: mob_rarity, 
-                    health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
-                    damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity)), 
+                    health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(mob_rarity)), 
+                    damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(mob_rarity)), 
                     dead: false
                 }
             }
@@ -1343,8 +1343,8 @@ client.on('interactionCreate', (interaction) => {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
                     rarity: mob_rarity, 
-                    health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(rarity)), 
-                    damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(rarity))
+                    health: mobStats[mobs[i]].health * (5 ** petalLowercaseRarities.indexOf(mob_rarity)), 
+                    damage: mobStats[mobs[i]].damage * (3 ** petalLowercaseRarities.indexOf(mob_rarity))
                 }
             }
 
