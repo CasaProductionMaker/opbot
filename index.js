@@ -852,6 +852,9 @@ client.on('interactionCreate', (interaction) => {
 
                         // Stinger
                         if (p_id == 16) { // 35% miss chance
+                            // counteract regular dmg application with a subtraction
+                            totalPlayerDamage -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+
                             let hitTimes = 0;
                             let hitRNG = Math.random();
                             if(hitRNG < 0.65) {
@@ -1645,7 +1648,7 @@ client.on('interactionCreate', (interaction) => {
                 }
                 rows[rows.length - 1].addComponents(
                     new ButtonBuilder()
-                        .setCustomId(`slotpetal-${slot}-${petal}-${rarity}`)
+                        .setCustomId(`slotpetal2-${slot}-${petal}-${rarity}`)
                         .setLabel(text)
                         .setStyle(style)
                         .setDisabled(dis)
