@@ -637,9 +637,9 @@ client.on('interactionCreate', (interaction) => {
                 continue;
             }
             if(Number.isFinite(parseInt(val))) {
-                statsText += `**${stat}:** ${val * (3 ** rarity)}\n`
+                statsText += `**${stat}:** ${(val * (3 ** rarity)).toFixed(2)}\n`
             } else {
-                statsText += `**${stat}:** ${val}\n`
+                statsText += `**${stat}:** ${val.toFixed(2)}\n`
             }
         }
 
@@ -1151,10 +1151,10 @@ client.on('interactionCreate', (interaction) => {
                 // generate mob list to show in message
                 let mobList = "";
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
-                    mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${data[user.id]["grind-info"].mobs[i].health} HP, ${data[user.id]["grind-info"].mobs[i].damage} DMG\n`;
+                    mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${data[user.id]["grind-info"].mobs[i].health.toFixed(2)} HP, ${data[user.id]["grind-info"].mobs[i].damage.toFixed(2)} DMG\n`;
                 }
                 interaction.update({
-                    content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.\n**Zone: ${data[user.id]["grind-info"].zone}**${extraInfo}\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
+                    content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.\n**Zone: ${data[user.id]["grind-info"].zone}**${extraInfo}\nYour health: ${data[user.id].health.toFixed(2)}\nMobs: \n${mobList}`, 
                     components: updatedComponents, 
                     flags: MessageFlags.Ephemeral
                 });
