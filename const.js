@@ -38,10 +38,11 @@ export const dropRarityChances = [
 
 // Cost in stars for each level of talents, starting at 0.
 export const talentCosts = {
-    "loadout": [0, 0, 0, 100, 3000, 10000, 300000, 1000000],
+    "loadout": [0, 0, 15, 100, 3000, 10000, 300000, 1000000],
     "evasion": [],
     "max_hp": [10, 50, 250, 1250, 6250, 31250, 156250, 444444]
 }
 
 export const rareMobSpawn = 0.05; // chance for mob to be 1 rarity above
 export const rareLootChance = 0.05;
+export const targetDummyHealth = 1000000000000000;

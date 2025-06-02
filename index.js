@@ -408,6 +408,7 @@ client.on('interactionCreate', (interaction) => {
 
     if (interaction.commandName === 'grind') {
         const biome = interaction.options.get('biome');
+        const startingZone = biomes[biome.value].startingZone;
         const rarity = "common";
         const user = interaction.user;
         if (!data[user.id]) {
@@ -429,11 +430,12 @@ client.on('interactionCreate', (interaction) => {
         console.log("mob amount after poo: " + mobAmount);
 
         let mobs = [];
+        const possibleMobs = biomes[biome.value].map[startingZone].mobs;
         for (let i = 0; i < mobAmount; i++) {
-            let randomID = Math.floor(Math.random() * biomes[biome.value].mobs.length);
-            let mob = biomes[biome.value].mobs[randomID];
+            let randomID = Math.floor(Math.random() * possibleMobs.length);
+            let mob = possibleMobs[randomID];
             if (mobStats[mob].reroll) {
-                mob = biomes[biome.value].mobs[Math.floor(Math.random() * biomes[biome.value].mobs.length)];
+                mob = possibleMobs[Math.floor(Math.random() * possibleMobs.length)];
             }
             mobs.push(mob);
         }
@@ -466,7 +468,8 @@ client.on('interactionCreate', (interaction) => {
             rarity: rarity, 
             mobs: mobInfo, 
             messageID: interaction.id, 
-            mobsLeft: mobAmount
+            mobsLeft: mobAmount, 
+            zone: startingZone
         }
         if(!data[user.id]["health"]) data[user.id]["health"] = 30;
         saveData();
@@ -477,7 +480,7 @@ client.on('interactionCreate', (interaction) => {
         }
 
         interaction.reply({
-            content: `You are grinding in the ${biomes[biome.value].name} for ${rarity} mobs.\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
+            content: `You are grinding in the ${biomes[biome.value].name} for ${rarity} mobs.\n**Zone: ${startingZone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
             components: [row], 
             flags: MessageFlags.Ephemeral
         });
@@ -663,6 +666,33 @@ client.on('interactionCreate', (interaction) => {
             flags: MessageFlags.Ephemeral
         })
     }
+    if (interaction.commandName === "visit_target_dummy") {
+        const user = interaction.user;
+        if (!data[user.id]) {
+            data[user.id] = {}
+        }
+        if(data[user.id]["health"] <= 0) {
+            interaction.reply("You are dead! You cannot grind.");
+            return;
+        }
+
+        const row = new ActionRowBuilder();
+        row.addComponents(
+            new ButtonBuilder()
+                .setCustomId("attack-dummy")
+                .setLabel(`Attack Dummy!`)
+                .setStyle(ButtonStyle.Danger)
+        )
+
+        if(!data[user.id]["health"]) data[user.id]["health"] = 30;
+        saveData();
+
+        interaction.reply({
+            content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): 0`, 
+            components: [row], 
+            flags: MessageFlags.Ephemeral
+        });
+    }
 
     if (interaction.isButton()) {
         // super mobs to fix
@@ -782,7 +812,7 @@ client.on('interactionCreate', (interaction) => {
                 let talismanChance = 0;
                 for (const petal of data[user.id]["loadout"]) {
                     if(petal.split("_")[0] == 20) {
-                        talismanChance = petalStats[19].evasion + (0.1 * (petal.split("_")[1] || 0));
+                        talismanChance = petalStats[19].evasion + (0.1 * (parseInt(petal.split("_")[1]) || 0));
                     }
                 }
                
@@ -891,7 +921,7 @@ client.on('interactionCreate', (interaction) => {
                     if(data[user.id]["grind-info"].mobs[i].health > 0) {
                         if(Math.random() < talismanChance) {
                             // if talisman equipped, chance to not take damage
-                            extraInfo += `\nYour Talisman has warded a mob from you!`;
+                            extraInfo += `\nYour Talisman has allowed you to evade a mob!`;
                             continue;
                         }
                         // do damage
@@ -1044,22 +1074,27 @@ client.on('interactionCreate', (interaction) => {
                         return;
                     }
 
+                    // generate options for map movement direction (left, right, etc)
+                    let optionButtons = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId("continue-grind")
+                                .setLabel("Continue grinding")
+                                .setStyle(ButtonStyle.Primary)
+                        );
+                    for (const direction in biomes[data[user.id]["grind-info"].biome].map[data[user.id]["grind-info"].zone].connections) {
+                        optionButtons.addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`higher-rarity-${biomes[data[user.id]["grind-info"].biome].map[data[user.id]["grind-info"].zone].connections[direction]}`)
+                                .setLabel(`Go ${direction}`)
+                                .setStyle(ButtonStyle.Success)
+                        );
+                    }
+
                     // allow user to continue grinding or go to higher rarity zone
                     interaction.update({
                         content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 2)} stars!${petalDropText}\nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
-                        components: [
-                            new ActionRowBuilder()
-                                .addComponents(
-                                    new ButtonBuilder()
-                                        .setCustomId("continue-grind")
-                                        .setLabel("Continue grinding")
-                                        .setStyle(ButtonStyle.Primary),
-                                    new ButtonBuilder()
-                                        .setCustomId("higher-rarity")
-                                        .setLabel("Go to higher rarity zone")
-                                        .setStyle(ButtonStyle.Success)
-                                )
-                        ], 
+                        components: [optionButtons], 
                         flags: MessageFlags.Ephemeral
                     });
                     return;
@@ -1084,22 +1119,27 @@ client.on('interactionCreate', (interaction) => {
                         return;
                     }
 
+                    // generate options for map movement direction (left, right, etc)
+                    let optionButtons = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId("continue-grind")
+                                .setLabel("Continue grinding")
+                                .setStyle(ButtonStyle.Primary)
+                        );
+                    for (const direction in biomes[data[user.id]["grind-info"].biome].map[data[user.id]["grind-info"].zone].connections) {
+                        optionButtons.addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`higher-rarity-${biomes[data[user.id]["grind-info"].biome].map[data[user.id]["grind-info"].zone].connections[direction]}`)
+                                .setLabel(`Go ${direction}`)
+                                .setStyle(ButtonStyle.Success)
+                        );
+                    }
+
                     // allow user to continue grinding or go to higher rarity zone
                     interaction.update({
                         content: `You have bubbled through this zone! \nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
-                        components: [
-                            new ActionRowBuilder()
-                                .addComponents(
-                                    new ButtonBuilder()
-                                        .setCustomId("continue-grind")
-                                        .setLabel("Continue grinding")
-                                        .setStyle(ButtonStyle.Primary),
-                                    new ButtonBuilder()
-                                        .setCustomId("higher-rarity")
-                                        .setLabel("Go to higher rarity zone")
-                                        .setStyle(ButtonStyle.Success)
-                                )
-                        ], 
+                        components: [optionButtons], 
                         flags: MessageFlags.Ephemeral
                     });
                     return;
@@ -1111,16 +1151,91 @@ client.on('interactionCreate', (interaction) => {
                     mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${data[user.id]["grind-info"].mobs[i].health} HP, ${data[user.id]["grind-info"].mobs[i].damage} DMG\n`;
                 }
                 interaction.update({
-                    content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.${extraInfo}\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
+                    content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.\n**Zone: ${data[user.id]["grind-info"].zone}**${extraInfo}\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
                     components: updatedComponents, 
                     flags: MessageFlags.Ephemeral
                 });
             } else {
                 interaction.deferUpdate();
             }
+        } else if (interaction.customId === "attack-dummy") {
+            const user = interaction.user;
+            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+            saveData();
+
+            // calculate petal dmg
+            let totalPlayerDamage = 0;
+            let extraInfo = "";
+
+            // check for double damage from faster
+            let doubleDamage = false;
+            let fasterRarity = parseInt(isPetalEquipped(9, user.id));
+            if(fasterRarity >= 0) {
+                doubleDamage = (Math.random() < (petalStats[9].rotation * (fasterRarity + 1)));
+            }
+
+            // check if user has bur
+            let bur = 0;
+            for (const petal of data[user.id]["loadout"]) {
+                if(petal.split("_")[0] == 15) {
+                    bur = petalStats[15].pierce * (3 ** (petal.split("_")[1] || 0));
+                    bur = Math.floor(bur);
+                    break;
+                }
+            }
+
+            // check if user has goldenleaf
+            let gleafDmgIncrease = 1;
+            for (const petal of data[user.id]["loadout"]) {
+                if(petal.split("_")[0] == 17) {
+                    gleafDmgIncrease = (1.1 ** ((petal.split("_")[1]-2) || 0));
+                    break;
+                }
+            }
+            
+            // check all petals for dmg and heals
+            for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
+                for (const petal of data[user.id]["loadout"]) {
+                    p_id = petal.split("_")[0];
+                    if (p_id == -1) continue; // Skip if petal is -1
+
+                    // Stinger
+                    if (p_id == 16) { // 35% miss chance
+                        let hitTimes = 0;
+                        let hitRNG = Math.random();
+                        if(hitRNG < 0.65) {
+                            totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                            hitTimes++;
+                        }
+                        
+                        hitRNG = Math.random();
+                        if(hitRNG < 0.65) {
+                            totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                            hitTimes++;
+                        }
+                        extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
+                    }
+
+                    totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                    
+                    // apply bur buff multiplied by petal count
+                    totalPlayerDamage += bur * (petalStats[p_id].count || 1);
+                }
+            }
+
+            // apply dmg
+            totalPlayerDamage = Math.floor(totalPlayerDamage * gleafDmgIncrease);
+            saveData();
+
+            interaction.update({
+                content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): ${totalPlayerDamage}${extraInfo}`, 
+                components: interaction.message.components, 
+                flags: MessageFlags.Ephemeral
+            });
         } else if (interaction.customId === "continue-grind") {
             const biome = data[interaction.user.id]["grind-info"].biome;
             const rarity = data[interaction.user.id]["grind-info"].rarity;
+            const zone = data[interaction.user.id]["grind-info"].zone;
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
             saveData();
@@ -1137,11 +1252,12 @@ client.on('interactionCreate', (interaction) => {
             mobAmount = Math.max(mobAmount, 1);
             
             let mobs = [];
+            const possibleMobs = biomes[biome].map[zone].mobs;
             for (let i = 0; i < mobAmount; i++) {
-                let randomID = Math.floor(Math.random() * biomes[biome].mobs.length);
-                let mob = biomes[biome].mobs[randomID];
+                let randomID = Math.floor(Math.random() * possibleMobs.length);
+                let mob = possibleMobs[randomID];
                 if (mobStats[mob].reroll) {
-                    mob = biomes[biome].mobs[Math.floor(Math.random() * biomes[biome].mobs.length)];
+                    mob = possibleMobs[Math.floor(Math.random() * possibleMobs.length)];
                 }
                 mobs.push(mob);
             }
@@ -1174,7 +1290,8 @@ client.on('interactionCreate', (interaction) => {
                 rarity: rarity, 
                 mobs: mobInfo, 
                 messageID: interaction.id, 
-                mobsLeft: mobAmount
+                mobsLeft: mobAmount, 
+                zone: zone
             }
             if(!data[user.id]["health"]) data[user.id]["health"] = 30;
             saveData();
@@ -1185,11 +1302,12 @@ client.on('interactionCreate', (interaction) => {
             }
 
             interaction.update({
-                content: `You are grinding in the ${biomes[biome].name} for ${rarity} mobs.\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
+                content: `You are grinding in the ${biomes[biome].name} for ${rarity} mobs.\n**Zone: ${zone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
                 components: [row], 
                 flags: MessageFlags.Ephemeral
             });
-        } else if (interaction.customId === "higher-rarity") {
+        } else if (interaction.customId.includes("higher-rarity-")) {
+            const newZone = interaction.customId.split("higher-rarity-")[1];
             const biome = data[interaction.user.id]["grind-info"].biome;
             const rarity = petalLowercaseRarities[petalLowercaseRarities.indexOf(data[interaction.user.id]["grind-info"].rarity) + 1];
             const user = interaction.user;
@@ -1208,11 +1326,12 @@ client.on('interactionCreate', (interaction) => {
             mobAmount = Math.max(mobAmount, 1);
             
             let mobs = [];
+            const possibleMobs = biomes[biome].map[newZone].mobs;
             for (let i = 0; i < mobAmount; i++) {
-                let randomID = Math.floor(Math.random() * biomes[biome].mobs.length);
-                let mob = biomes[biome].mobs[randomID];
+                let randomID = Math.floor(Math.random() * possibleMobs.length);
+                let mob = possibleMobs[randomID];
                 if (mobStats[mob].reroll) {
-                    mob = biomes[biome].mobs[Math.floor(Math.random() * biomes[biome].mobs.length)];
+                    mob = possibleMobs[Math.floor(Math.random() * possibleMobs.length)];
                 }
                 mobs.push(mob);
             }
@@ -1244,7 +1363,8 @@ client.on('interactionCreate', (interaction) => {
                 rarity: rarity, 
                 mobs: mobInfo, 
                 messageID: interaction.id, 
-                mobsLeft: mobAmount
+                mobsLeft: mobAmount, 
+                zone: newZone
             }
             if(!data[user.id]["health"]) data[user.id]["health"] = 30;
             saveData();
@@ -1255,7 +1375,7 @@ client.on('interactionCreate', (interaction) => {
             }
 
             interaction.update({
-                content: `You are grinding in the ${biomes[biome].name} for ${rarity} mobs.\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
+                content: `You are grinding in ${biomes[biome].name} for ${rarity} mobs.\n**Zone: ${newZone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
                 components: [row], 
                 flags: MessageFlags.Ephemeral
             });

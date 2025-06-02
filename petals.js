@@ -169,16 +169,16 @@ export const petalStats = [
     },
     {
         name: "Poo",
-        description: "Reduces the number of mobs that attack you.",
+        description: "Reduces the number of mobs that spawn per wave.",
         damage: 0,
         heal: 0,
         max_health: 0, 
-        smell: 0.03 // 3% chance to not attack + 3% per rarity
+        smell: 0.1 // 10% chance to reduce mob spawn + 5% per rarity
     },
     {
         name: "Talisman",
-        description: "A single mob has a chance to not attack you.",
-        damage: 0,
+        description: "A mobs have a chance to not hit you.",
+        damage: 2,
         heal: 0,
         max_health: 0, 
         evasion: 0.15 // 20% chance to not attack + 10% per rarity
@@ -188,6 +188,7 @@ export const petalStats = [
         description: "Its sweet smell attracts more mobs toward you.",
         damage: 0,
         heal: 0,
-        max_health: 0
+        max_health: 0, 
+        attraction: 0.1 // 10% chance to attract a mob + 5% per rarity
     }
 ]

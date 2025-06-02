@@ -260,5 +260,9 @@ export const commands = [
     {
         name: "swap_loadout_slot", 
         description: "Swap a petal in your loadout with a petal in your secondary loadout beneath it."
+    }, 
+    {
+        name: "visit_target_dummy", 
+        description: "Visit the target dummy to test your loadout and see how much damage it does."
     }
 ];
