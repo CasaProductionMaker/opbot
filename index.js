@@ -632,7 +632,9 @@ client.on('interactionCreate', (interaction) => {
         let statsText = "";
         for (const [stat, val] of Object.entries(petalStats[petal])) {
             if(val <= 0 && stat != "damage") continue;
-            if(stat == "rotation") {
+            let unscaled_stats = ["rotation", "count", "smell", "evasion", "attraction", "dmg_increase"];
+            // TODO fix scaling display
+            if(unscaled_stats.includes(stat)) {
                 statsText += `**${stat}:** ${val * (rarity + 1)}\n`
                 continue;
             }
@@ -1267,7 +1269,8 @@ client.on('interactionCreate', (interaction) => {
             let mobInfo = [];
             for (let i = 0; i < mobs.length; i++) {
                 let mob_rarity = petalRarities[petalLowercaseRarities.indexOf(rarity)]; // random chance to increase rarity
-            if(Math.random() < constants.rareMobSpawn) mob_rarity = petalRarities[Math.min(petalLowercaseRarities.indexOf(rarity) + 1, 6)];
+            if(rarity != "Ultra" && Math.random() < constants.rareMobSpawn) {
+                mob_rarity = petalRarities[Math.min(petalLowercaseRarities.indexOf(rarity) + 1, 6)];
                 mobInfo[i] = {
                     name: mobs[i],
                     loot: mobStats[mobs[i]].loot,
@@ -1275,6 +1278,30 @@ client.on('interactionCreate', (interaction) => {
                     health: mobStats[mobs[i]].health * (5 ** petalRarities.indexOf(mob_rarity)), 
                     damage: mobStats[mobs[i]].damage * (3 ** petalRarities.indexOf(mob_rarity)), 
                     dead: false
+                }
+            } else if (Math.random() < constants.superMobSpawn) { // if at Ultra level, have a super spawn chance instead
+                const mob = mobs[i];
+                if(!data["super-mob"]) { // 
+                    data["super-mob"] = {
+                        name: mob,
+                        health: mobStats[mob].health * 78125,
+                        damage: mobStats[mob].damage * 2187,
+                        loot: mobStats[mob].loot * 16384,
+                        damagers: {}
+                    }
+                    saveData();
+                    interaction.channel.send({
+                        content: `A Super ${mob} has spawned!\nHealth: ${data["super-mob"].health}\nDamage:${data["super-mob"].damage}\nLoot: ${data["super-mob"].loot}`,
+                        components: [
+                            new ActionRowBuilder()
+                                .addComponents(
+                                    new ButtonBuilder()
+                                        .setCustomId("super-mob")
+                                        .setLabel("Attack!")
+                                        .setStyle(ButtonStyle.Danger)
+                                )
+                        ]
+                    });
                 }
             }
 
