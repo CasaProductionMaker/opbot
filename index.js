@@ -2,6 +2,7 @@ const constants = require('./const')
 const petals = require('./petals')
 const mobs = require('./mobs')
 const util = require('./util')
+const profile = require('./commands/profile')
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
 const dataFile = "saved_data.json";
@@ -60,11 +61,6 @@ function getPetalRarity(petal) {
     return petalRarities[petal];
 }
 
-// Gets the petal dmg
-function getPetalDamage(petal, rarity) {
-    return Math.floor(petalStats[petal].damage * (3 ** rarity));
-}
-
 // checks if a petal is equipped. If yes, returns rarity; else returns -1
 function isPetalEquipped(petal, userid) {
     for (const p in data[userid]["loadout"]) {
@@ -106,57 +102,6 @@ function honeyAttractAmount(userid) {
         }
     }
     return honeyModifier;
-}
-
-// Returns a string of the petal, like "Common Light (2 Damage): 5x"
-function petalToText(petal, inter, includeNumber = true) {
-    let petalAmounts = data[inter.user.id].inventory[petal];
-    
-    // check if user has any of the petal
-    let hasPetal = false;
-    for (let i = 0; i < petalAmounts.length; i++) {
-        if (petalAmounts[i] > 0) {
-            hasPetal = true;
-            break;
-        }
-    }
-    if (!hasPetal) {
-        return "";
-    }
-
-    // get petal type
-    let petalStrings = [];
-    for (let i = 0; i < petalAmounts.length; i++) {
-        if(petalAmounts[i] > 0) {
-            let petalRarity = petalRarities[i];
-            let petalDamageValue = getPetalDamage(petal, i);
-            petalStrings.push(`  - ${petalRarity} (${petalDamageValue} Damage): ${petalAmounts[i]}x`);
-        }
-    }
-
-    return "- " + petalTypes[petal] + "\n" + petalStrings.join("\n") + "\n";
-}
-
-function singlePetalToText(petal) {
-    let petalRarity = getPetalRarity(petal.split("_")[1]);
-    let petalType = petalTypes[petal.split("_")[0]];
-    let petalDamageValue = getPetalDamage(petal.split("_")[0], petal.split("_")[1]);
-    return `- ${petalRarity} ${petalType} (${petalDamageValue} Damage)\n`;
-}
-
-// Display text for loadout
-function makeLoadoutText(userid, secondary = false) {
-    let loadoutText = "";
-    let loadout = secondary ? data[userid].second_loadout : data[userid].loadout;
-    for (const i in loadout) {
-        const petal = loadout[i];
-        if (petal.split("_")[0] == "-1") {
-            loadoutText += `- Empty Slot!\n`;
-            continue;
-        }
-        loadoutText += singlePetalToText(petal);
-    }
-    return loadoutText;
 }
 
 // Load data
@@ -491,41 +436,15 @@ client.on('interactionCreate', (interaction) => {
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
 
-        let loadoutText = makeLoadoutText(inter.user.id);
-        let secondaryLoadoutText = makeLoadoutText(inter.user.id, true);
+        let loadoutText = util.makeLoadoutText(inter.user.id);
+        let secondaryLoadoutText = util.makeLoadoutText(inter.user.id, true);
 
         interaction.reply({
             content: `**Loadout of ${inter.user.username}**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`,
         });
     }
     if (interaction.commandName === 'profile') { 
-        const inter = interaction.options.get('user') || interaction;
-        data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
-        saveData();
-        
-        // print general stats
-        let xp = data[inter.user.id].xp;
-        let stars = data[inter.user.id].stars;
-        let level = data[inter.user.id].level;
-        let maxHealth = data[inter.user.id].max_health;
-        let health = data[inter.user.id].health != null ? data[inter.user.id].health : maxHealth;
-        let inventoryText = "";
-
-        // print inventory
-        for (const petal in data[inter.user.id].inventory) {
-            console.log(petal)
-            inventoryText += petalToText(petal, inter);
-        }
-
-        // print loadout
-        let loadoutText = makeLoadoutText(inter.user.id);
-        let secondaryLoadoutText = makeLoadoutText(inter.user.id, true);
-
-        // print final text
-        let finalText = `**Profile of ${inter.user.username}**\nLevel ${level}, XP: ${xp}\nStars: ${stars}\nHealth: ${health}/${maxHealth}\n**Inventory:**\n${inventoryText}**Current Loadout:**\n${loadoutText}\n**Secondary Loadout:**\n${secondaryLoadoutText}`;
-        interaction.reply({
-            content: finalText
-        });
+        profile.execute(interaction, data, saveData);
     }
     if (interaction.commandName === 'respawn') {
         const user = interaction.user;
