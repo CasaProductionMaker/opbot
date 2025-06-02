@@ -4,6 +4,8 @@
 
 import fs from "fs";
 import { petalStats } from "./petals.js";
+import { petalTypes } from "./petals.js";
+import { petalRarities } from "./const.js";
 const dataFile = "saved_data.json";
 
 export function getCurrentTime() {
@@ -38,4 +40,15 @@ export function fillInProfileBlanks(profile) {
 }
 export function getCraftCost(rarity) {
     return Math.floor((10 * rarity ** 3) + 5)
+}
+
+// Gets the petal type from a petal string. Petal string is
+// "n_m" where n is the id and m is the rarity
+export function getPetalType(petal) {
+    return petalTypes[petal];
+}
+
+// Gets the petal rarity
+export function getPetalRarity(petal) {
+    return petalRarities[petal];
 }

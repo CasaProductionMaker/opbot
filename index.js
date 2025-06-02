@@ -5,11 +5,12 @@ const util = require('./util')
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
 const dataFile = "saved_data.json";
+const LoadoutHandler = require('./loadoutHandler');
 let data = {};
 
 // Get Discord js stuff
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
-const { deserialize } = require('v8');ç
+const { deserialize } = require('v8');
 const { type } = require('os');
 const { get } = require('http');
 
@@ -1748,210 +1749,68 @@ client.on('interactionCreate', (interaction) => {
                 components: rows, 
                 flags: MessageFlags.Ephemeral
             })
-        } else if (interaction.customId.includes("slotpetal-")) {
+        } else if (interaction.customId.includes("slotpetal")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-
+            
             const slotID = parseInt(interaction.customId.split("-")[1]);
             const petalToSlotIn = interaction.customId.split("-")[2];
-            const petalRarity = interaction.customId.split("-")[3];
+            const petalRarity = parseInt(interaction.customId.split("-")[3]);
+            const isSecondary = interaction.customId.startsWith("slotpetal2-");
+            const loadoutType = isSecondary ? "second_loadout" : "loadout";
 
-            // console.log("Slot ID", slotID);
-            // console.log("Petal to slot in", petalToSlotIn);
-            // console.log("Petal rarity", petalRarity);
-
-            // safeguard against double slotting. Bool value used after buttons are updated (down below)
-            let alreadyEquipped = false;
-            for (let i = 0; i < data[user.id]["loadout"].length; i++) {
-                if(data[user.id]["loadout"][i] == `${petalToSlotIn}_${petalRarity}`) {
-                    alreadyEquipped = true;
-                    break;
-                }
+            // Handle petal equipping
+            const { updatedData, success, alreadyEquipped } = LoadoutHandler.equipPetal(
+                data[user.id], 
+                loadoutType, 
+                slotID, 
+                petalToSlotIn, 
+                petalRarity
+            );
+            
+            // Update the data
+            data[user.id] = updatedData;
+            saveData();
+            
+            // Create petal selection buttons
+            const rows = LoadoutHandler.createPetalButtons(
+                data[user.id],
+                loadoutType,
+                slotID,
+                petalToSlotIn
+            );
+            
+            // Count available petals
+            const petalsAvailable = rows.reduce((count, row) => count + row.components.length, 0);
+            
+            // Get response message
+            const response = LoadoutHandler.getResponseMessage(
+                success,
+                alreadyEquipped,
+                petalTypes[petalToSlotIn],
+                slotID,
+                loadoutType,
+                petalsAvailable
+            );
+            
+            // Add loadout text if not an error case
+            if (!alreadyEquipped && petalsAvailable > 0) {
+                const loadoutText = makeLoadoutText(user.id, isSecondary);
+                response.content = `**New ${isSecondary ? 'secondary ' : ''}loadout:**\n${loadoutText}\n${response.content}`;
             }
             
-            if(!alreadyEquipped) {
-                // Remove petal from slot, put in inventory
-                let slotPetal = data[user.id]["loadout"][slotID].split("_")[0];
-                let slotPetalRarity = data[user.id]["loadout"][slotID].split("_")[1];
-                // console.log("Slot petal", slotPetal);
-                // console.log("Slot petal rarity", slotPetalRarity);
-                if(slotPetal != "-1") {
-                    if(data[user.id]["inventory"][slotPetal] == undefined) {
-                        data[user.id]["inventory"][slotPetal] = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
-                    }
-                    data[user.id]["inventory"][slotPetal][slotPetalRarity]++;
-                }
-                
-                // Add petal to slot from inventory
-                data[user.id]["loadout"][slotID] = `${petalToSlotIn}_${petalRarity}`;
-                if(data[user.id]["inventory"][petalToSlotIn][petalRarity] > 0) {
-                    data[user.id]["inventory"][petalToSlotIn][petalRarity]--;
-                }
-                saveData();
-            }
-            
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const rarity in data[user.id]["inventory"][petalToSlotIn]) {
-                if(data[user.id]["inventory"][petalToSlotIn][rarity] <= 0) continue; // skip if no petals of this rarity
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-
-                let style = ButtonStyle.Primary;
-                let text = `${getPetalRarity(rarity)} ${getPetalType(petalToSlotIn)}`;
-                let dis = false;
-                if(data[user.id]["loadout"].indexOf(`${petalToSlotIn}_${rarity}`) >= 0) {
-                    dis = true;
-                    if(data[user.id]["loadout"].indexOf(`${petalToSlotIn}_${rarity}`) == slotID) {
-                        style = ButtonStyle.Success;
-                        text += ` already in slot ${slotID+1}!`;
-                    } else {
-                        style = ButtonStyle.Danger;
-                        text += ` in another slot!`;
-                    }
-                }
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`slotpetal-${slotID}-${petalToSlotIn}-${rarity}`)
-                        .setLabel(text)
-                        .setStyle(style)
-                        .setDisabled(dis)
-                );
-                petalsSoFar++;
-            }
-
-            // if the petal is already equipped, dont do the slotting
-            if(alreadyEquipped) {
-                interaction.update({
-                    content: `You already have one of this petal in slot ${slotID+1}!`, 
-                    components: rows, 
-                    flags: MessageFlags.Ephemeral
-                })
-                return;
-            }
-
-            // Special msg if no petals left in inventory
-            if (petalsSoFar == 0) {
-                interaction.update({
-                    content: `Success. You now have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
-                    components: [], 
-                    flags: MessageFlags.Ephemeral
-                })
-                return;
-            }
-
-            // otherwise keep msg
-            let loadoutText = makeLoadoutText(user.id);
+            // Update the interaction
             interaction.update({
-                content: `**New loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
-                components: rows, 
+                content: response.content,
+                components: rows.length > 0 ? rows : response.components,
                 flags: MessageFlags.Ephemeral
-            })
+            });
         } else if (interaction.customId.includes("slotpetal2-")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-
-            const slotID = parseInt(interaction.customId.split("-")[1]);
-            const petalToSlotIn = interaction.customId.split("-")[2];
-            const petalRarity = interaction.customId.split("-")[3];
-
-            // console.log("Slot ID", slotID);
-            // console.log("Petal to slot in", petalToSlotIn);
-            // console.log("Petal rarity", petalRarity);
-
-            // safeguard against double slotting. Bool value used after buttons are updated (down below)
-            let alreadyEquipped = false;
-            for (let i = 0; i < data[user.id]["second_loadout"].length; i++) {
-                if(data[user.id]["second_loadout"][i] == `${petalToSlotIn}_${petalRarity}`) {
-                    alreadyEquipped = true;
-                    break;
-                }
-            }
-            
-            if(!alreadyEquipped) {
-                // Remove petal from slot, put in inventory
-                let slotPetal = data[user.id]["second_loadout"][slotID].split("_")[0];
-                let slotPetalRarity = data[user.id]["second_loadout"][slotID].split("_")[1];
-                // console.log("Slot petal", slotPetal);
-                // console.log("Slot petal rarity", slotPetalRarity);
-                if(slotPetal != "-1") {
-                    if(data[user.id]["inventory"][slotPetal] == undefined) {
-                        data[user.id]["inventory"][slotPetal] = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
-                    }
-                    data[user.id]["inventory"][slotPetal][slotPetalRarity]++;
-                }
-                
-                // Add petal to slot from inventory
-                data[user.id]["second_loadout"][slotID] = `${petalToSlotIn}_${petalRarity}`;
-                if(data[user.id]["inventory"][petalToSlotIn][petalRarity] > 0) {
-                    data[user.id]["inventory"][petalToSlotIn][petalRarity]--;
-                }
-                saveData();
-            }
-            
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const rarity in data[user.id]["inventory"][petalToSlotIn]) {
-                if(data[user.id]["inventory"][petalToSlotIn][rarity] <= 0) continue; // skip if no petals of this rarity
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-
-                let style = ButtonStyle.Primary;
-                let text = `${getPetalRarity(rarity)} ${getPetalType(petalToSlotIn)}`;
-                let dis = false;
-                if(data[user.id]["second_loadout"].indexOf(`${petalToSlotIn}_${rarity}`) >= 0) {
-                    dis = true;
-                    if(data[user.id]["second_loadout"].indexOf(`${petalToSlotIn}_${rarity}`) == slotID) {
-                        style = ButtonStyle.Success;
-                        text += ` already in slot ${slotID+1}!`;
-                    } else {
-                        style = ButtonStyle.Danger;
-                        text += ` in another slot!`;
-                    }
-                }
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`slotpetal-${slotID}-${petalToSlotIn}-${rarity}`)
-                        .setLabel(text)
-                        .setStyle(style)
-                        .setDisabled(dis)
-                );
-                petalsSoFar++;
-            }
-
-            // if the petal is already equipped, dont do the slotting
-            if(alreadyEquipped) {
-                interaction.update({
-                    content: `You already have one of this petal in slot ${slotID+1} of your secondary loadout!`, 
-                    components: rows, 
-                    flags: MessageFlags.Ephemeral
-                })
-                return;
-            }
-
-            // Special msg if no petals left in inventory
-            if (petalsSoFar == 0) {
-                interaction.update({
-                    content: `Success. You now have no ${petalTypes[petalToSlotIn]} left in your inventory!`, 
-                    components: [], 
-                    flags: MessageFlags.Ephemeral
-                })
-                return;
-            }
-
-            // otherwise keep msg
-            let loadoutText = makeLoadoutText(user.id, true);
+            // This is now handled by the slotpetal- case with isSecondary flag
             interaction.update({
-                content: `**New secondary loadout:**\n${loadoutText}\nWhich ${petalTypes[petalToSlotIn]} do you want to put in slot ${slotID+1}?`, 
-                components: rows, 
+                content: "This interaction is outdated. Please try again.",
                 flags: MessageFlags.Ephemeral
-            })
+            });
         } else if (interaction.customId === 'loadout-talent') {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
