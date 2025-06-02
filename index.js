@@ -9,7 +9,7 @@ let data = {};
 
 // Get Discord js stuff
 const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
-const { deserialize } = require('v8');
+const { deserialize } = require('v8');ç
 const { type } = require('os');
 const { get } = require('http');
 
