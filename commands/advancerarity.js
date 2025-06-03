@@ -1,5 +1,5 @@
 // advancerarity.js
-// Handles zones for when advancing
+// Handles zones for when advancing. Maybe can combine this with grind.js
 
 const mobsfile = require('../mobs');
 const constants = require('../const');

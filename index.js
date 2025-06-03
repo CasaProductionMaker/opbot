@@ -90,58 +90,42 @@ client.on('interactionCreate', (interaction) => {
     // Admin only commands
     if (interaction.commandName === 'xp_edit') {
         admin.editXP(interaction, data);
-    }
-    if (interaction.commandName === 'stars_edit') {
+    } else if (interaction.commandName === 'stars_edit') {
         admin.editStars(interaction, data);
-    }
-    if (interaction.commandName === "add_petal") {
+    } else if (interaction.commandName === "add_petal") {
         admin.addPetal(interaction, data);
-    }
-    if (interaction.commandName === "remove_petal") {
+    } else if (interaction.commandName === "remove_petal") {
         admin.removePetal(interaction, data);
-    }
-    if (interaction.commandName === 'spawn_super') {
+    } else if (interaction.commandName === 'spawn_super') {
         admin.spawnSuper(interaction, data);
     }
 
     // Normal commands
     if (interaction.commandName === 'craft_petal') {
         craft.execute(interaction, data);
-    }
-    if (interaction.commandName === 'upgrade_talents') {
+    } else if (interaction.commandName === 'upgrade_talents') {
         talents.execute(interaction, data);
-    }
-    if (interaction.commandName === 'grind') {
+    } else if (interaction.commandName === 'grind') {
         grind.execute(interaction, data);
-    }
-    if (interaction.commandName === 'loadout') {
+    } else if (interaction.commandName === 'loadout') {
         profile.execute(interaction, data, saveData, true);
-    }
-    if (interaction.commandName === 'profile') { 
+    } else if (interaction.commandName === 'profile') { 
         profile.execute(interaction, data, saveData);
-    }
-    if (interaction.commandName === 'respawn') {
+    } else if (interaction.commandName === 'respawn') {
         respawn.execute(interaction, data, saveData);
-    }
-    if (interaction.commandName === "edit_loadout") {
+    } else if (interaction.commandName === "edit_loadout") {
         inventory.editLoadout(interaction, data, false);
-    }
-    if (interaction.commandName === "edit_secondary_loadout") {
+    } else if (interaction.commandName === "edit_secondary_loadout") {
         inventory.editLoadout(interaction, data, true);
-    }
-    if (interaction.commandName === 'help') {
+    } else if (interaction.commandName === 'help') {
         admin.help(interaction);
-    }
-    if (interaction.commandName === "submit_idea") {
+    } else if (interaction.commandName === "submit_idea") {
         admin.submitIdea(interaction, data);
-    }
-    if (interaction.commandName === "petal_stats") {
+    } else if (interaction.commandName === "petal_stats") {
         petals.showPetalStats(interaction);
-    }
-    if (interaction.commandName === "swap_loadout_slot") {
+    } else if (interaction.commandName === "swap_loadout_slot") {
         inventory.swapLoadoutSlot(interaction, data);
-    }
-    if (interaction.commandName === "visit_target_dummy") {
+    } else if (interaction.commandName === "visit_target_dummy") {
         combat.visitDummy(interaction, data);
     }
 
