@@ -192,3 +192,27 @@ export const petalStats = [
         attraction: 0.1 // 10% chance to attract a mob + 5% per rarity
     }
 ]
+
+export function showPetalStats(interaction) {
+    const petal = interaction.options.get("petal").value;
+    const rarity = interaction.options.get("rarity").value;
+
+    let statsText = "";
+    for (const [stat, val] of Object.entries(petalStats[petal])) {
+        if(val <= 0 && stat != "damage") continue;
+        if(typeof val != "number") continue;
+        let unscaled_stats = ["rotation", "count", "smell", "evasion", "attraction", "dmg_increase"];
+        // TODO fix scaling display
+        if(unscaled_stats.includes(stat)) {
+            statsText += `**${stat}:** ${val * (rarity + 1)}\n`
+            continue;
+        }
+        if(Number.isFinite(parseInt(val))) {
+            statsText += `**${stat}:** ${(val * (3 ** rarity)).toFixed(2)}\n`
+        } else {
+            statsText += `**${stat}:** ${val.toFixed(2)}\n`
+        }
+    }
+
+    interaction.reply(statsText);
+}

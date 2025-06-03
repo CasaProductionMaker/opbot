@@ -265,46 +265,10 @@ client.on('interactionCreate', (interaction) => {
         respawn.execute(interaction, data, saveData);
     }
     if (interaction.commandName === "edit_loadout") {
-        const user = interaction.user;
-        
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-
-        let row = new ActionRowBuilder();
-        for (let i = 0; i < data[user.id]["loadout"].length; i++) {
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`editloadout-${i}`)
-                    .setLabel(`Slot ${i+1}`)
-                    .setStyle(ButtonStyle.Primary)
-            )
-        }
-        
-        interaction.reply({
-            content: `Which slot do you want to update?\n\nCurrent Loadout:\n${util.makeLoadoutText(user.id, data)}`, 
-            components: [row], 
-            flags: MessageFlags.Ephemeral
-        })
+        inventory.editLoadout(interaction, data, false);
     }
     if (interaction.commandName === "edit_secondary_loadout") {
-        const user = interaction.user;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-        saveData();
-
-        let row = new ActionRowBuilder();
-        for (let i = 0; i < data[user.id]["second_loadout"].length; i++) {
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`editloadout2-${i}`)
-                    .setLabel(`Slot ${i+1}`)
-                    .setStyle(ButtonStyle.Primary)
-            )
-        }
-        
-        interaction.reply({
-            content: `Which slot in your secondary loadout do you want to update?`, 
-            components: [row], 
-            flags: MessageFlags.Ephemeral
-        })
+        inventory.editLoadout(interaction, data, true);
     }
     if (interaction.commandName === 'help') {
         let commandList = "";
@@ -328,47 +292,10 @@ client.on('interactionCreate', (interaction) => {
         })
     }
     if (interaction.commandName === "petal_stats") {
-        const petal = interaction.options.get("petal").value;
-        const rarity = interaction.options.get("rarity").value;
-
-        let statsText = "";
-        for (const [stat, val] of Object.entries(petalStats[petal])) {
-            if(val <= 0 && stat != "damage") continue;
-            let unscaled_stats = ["rotation", "count", "smell", "evasion", "attraction", "dmg_increase"];
-            // TODO fix scaling display
-            if(unscaled_stats.includes(stat)) {
-                statsText += `**${stat}:** ${val * (rarity + 1)}\n`
-                continue;
-            }
-            if(Number.isFinite(parseInt(val))) {
-                statsText += `**${stat}:** ${(val * (3 ** rarity)).toFixed(2)}\n`
-            } else {
-                statsText += `**${stat}:** ${val.toFixed(2)}\n`
-            }
-        }
-
-        interaction.reply(statsText);
+        petals.showPetalStats(interaction);
     }
     if (interaction.commandName === "swap_loadout_slot") {
-        const user = interaction.user;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-        saveData();
-
-        // generate buttons
-        const row = new ActionRowBuilder();
-        for (let i = 0; i < data[user.id]["loadout"].length; i++) {
-            row.addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`swappetal-${i}`)
-                    .setLabel(`Slot ${i+1}`)
-                    .setStyle(ButtonStyle.Primary)
-            )
-        }
-        interaction.reply({
-            content: `Which slot do you want to swap?`,
-            components: [row],
-            flags: MessageFlags.Ephemeral
-        })
+        inventory.swapLoadoutSlot(interaction, data);
     }
     if (interaction.commandName === "visit_target_dummy") {
         const user = interaction.user;
@@ -536,186 +463,13 @@ client.on('interactionCreate', (interaction) => {
         } else if (interaction.customId.includes("higher-rarity-")) {
             advancerarity.execute(interaction, data);
         } else if (interaction.customId.includes("craftpetal-")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            const petalType = parseInt(interaction.customId.split("-")[1]);
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const rarity in data[user.id]["inventory"][petalType]) {
-                if(rarity >= 7) continue; // skip super and above
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-                let style = ButtonStyle.Primary;
-                if(data[user.id]["inventory"][petalType][rarity] <= 0) {
-                    style = ButtonStyle.Danger;
-                } else if(data[user.id]["inventory"][petalType][rarity] < 5) {
-                    style = ButtonStyle.Secondary;
-                }
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`craft-${petalType}-${rarity}`)
-                        .setLabel(`${data[user.id]["inventory"][petalType][rarity]}x ${getPetalRarity(rarity)} ${getPetalType(petalType)} (${util.getCraftCost(rarity)} stars)`)
-                        .setStyle(style)
-                        .setDisabled(style !== ButtonStyle.Primary)
-                );
-                petalsSoFar++;
-            }
-            interaction.update({
-                content: `What rarity to craft?\nYour stars: ${data[user.id].stars}`, 
-                components: rows, 
-                flags: MessageFlags.Ephemeral
-            })
+            craft.displayCrafts(interaction, data);
         } else if (interaction.customId.includes("craft-")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-            const petalType = interaction.customId.split("-")[1];
-            const currentPetalRarity = interaction.customId.split("-")[2];
-
-            if(currentPetalRarity >= petalRarities.length - 1) {
-                interaction.reply("You have already reached the max rarity.");
-                return;
-            }
-            let reqirement = util.getCraftCost(currentPetalRarity);
-            if(data[user.id]["stars"] < reqirement) {
-                interaction.reply("You need at least " + reqirement + " stars to attempt to craft a petal.");
-                return;
-            }
-
-            data[user.id]["stars"] -= reqirement;
-            saveData();
-
-
-            if (Math.random() > petalCraftChances[currentPetalRarity]) { // failed craft
-                data[user.id]["inventory"][petalType][currentPetalRarity] -= Math.ceil(Math.random() * 4);
-                saveData();
-
-                let rows = [];
-                let petalsSoFar = 0;
-                for (const rarity in data[user.id]["inventory"][petalType]) {
-                    if(rarity >= 7) continue; // skip super and above
-                    if(petalsSoFar % 5 == 0) {
-                        rows.push(new ActionRowBuilder());
-                    }
-                    let style = ButtonStyle.Primary;
-                    if(data[user.id]["inventory"][petalType][rarity] <= 0) {
-                        style = ButtonStyle.Danger;
-                    } else if(data[user.id]["inventory"][petalType][rarity] < 5) {
-                        style = ButtonStyle.Secondary;
-                    }
-                    rows[rows.length - 1].addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(`craft-${petalType}-${rarity}`)
-                            .setLabel(`${data[user.id]["inventory"][petalType][rarity]}x ${getPetalRarity(rarity)} ${getPetalType(petalType)} (${util.getCraftCost(rarity)} stars)`)
-                            .setStyle(style)
-                            .setDisabled(style !== ButtonStyle.Primary)
-                    );
-                    petalsSoFar++;
-                }
-                interaction.update({
-                    content: `**Crafting failed...**\nWhat rarity to craft?\nYour stars: ${data[user.id].stars}`, 
-                    components: rows, 
-                    flags: MessageFlags.Ephemeral
-                })
-                return;
-            }
-
-            data[user.id]["inventory"][petalType][currentPetalRarity] -= 5; // success
-            data[user.id]["inventory"][petalType][parseInt(currentPetalRarity) + 1] += 1;
-
-            saveData();
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const rarity in data[user.id]["inventory"][petalType]) {
-                if(rarity >= 7) continue; // skip super and above
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-                let style = ButtonStyle.Primary;
-                if(data[user.id]["inventory"][petalType][rarity] <= 0) {
-                    style = ButtonStyle.Danger;
-                } else if(data[user.id]["inventory"][petalType][rarity] < 5) {
-                    style = ButtonStyle.Secondary;
-                }
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`craft-${petalType}-${rarity}`)
-                        .setLabel(`${data[user.id]["inventory"][petalType][rarity]}x ${getPetalRarity(rarity)} ${getPetalType(petalType)} (${util.getCraftCost(rarity)} stars)`)
-                        .setStyle(style)
-                        .setDisabled(style !== ButtonStyle.Primary)
-                );
-                petalsSoFar++;
-            }
-            interaction.update({
-                content: `**Crafting success!**\nWhat rarity to craft?\nYour stars: ${data[user.id].stars}`, 
-                components: rows, 
-                flags: MessageFlags.Ephemeral
-            })
+            craft.attemptCraft(interaction, data);
         } else if (interaction.customId.includes("editloadout-")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-            const slot = parseInt(interaction.customId.split("-")[1]);
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const petal in data[user.id]["inventory"]) {
-                // skip if no petals of this type. Use reduce to calculate sum
-                if(data[user.id]["inventory"][petal].reduce((a, b) => a + b, 0) == 0) continue;
-                
-                // build petals
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-    
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`editslot-${slot}-${petal}`)
-                        .setLabel(getPetalType(petal))
-                        .setStyle(ButtonStyle.Primary)
-                );
-                petalsSoFar++;
-            }
-    
-            interaction.update({
-                content: `Which petal do you want to put in slot ${slot+1}?`, 
-                components: rows, 
-                flags: MessageFlags.Ephemeral
-            })
+            inventory.editLoadoutSlot(interaction, data, false);
         } else if (interaction.customId.includes("editloadout2-")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-            const slot = parseInt(interaction.customId.split("-")[1]);
-
-            let rows = [];
-            let petalsSoFar = 0;
-            for (const petal in data[user.id]["inventory"]) {
-                // skip if no petals of this type. Use reduce to calculate sum
-                if(data[user.id]["inventory"][petal].reduce((a, b) => a + b, 0) == 0) continue;
-                
-                // build petals
-                if(petalsSoFar % 5 == 0) {
-                    rows.push(new ActionRowBuilder());
-                }
-    
-                rows[rows.length - 1].addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`editslot2-${slot}-${petal}`)
-                        .setLabel(getPetalType(petal))
-                        .setStyle(ButtonStyle.Primary)
-                );
-                petalsSoFar++;
-            }
-    
-            interaction.update({
-                content: `Which petal do you want to put in slot ${slot+1} of your secondary loadout?`, 
-                components: rows, 
-                flags: MessageFlags.Ephemeral
-            })
+            inventory.editLoadoutSlot(interaction, data, true);
         } else if (interaction.customId.includes("editslot-")) {
             const user = interaction.user;
             data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
@@ -825,67 +579,7 @@ client.on('interactionCreate', (interaction) => {
                 flags: MessageFlags.Ephemeral
             })
         } else if (interaction.customId.includes("slotpetal")) {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            
-            const slotID = parseInt(interaction.customId.split("-")[1]);
-            const petalToSlotIn = interaction.customId.split("-")[2];
-            const petalRarity = parseInt(interaction.customId.split("-")[3]);
-            const isSecondary = interaction.customId.startsWith("slotpetal2-");
-            const loadoutType = isSecondary ? "second_loadout" : "loadout";
-
-            // Handle petal equipping
-            const { updatedData, success, alreadyEquipped } = LoadoutHandler.equipPetal(
-                data[user.id], 
-                loadoutType, 
-                slotID, 
-                petalToSlotIn, 
-                petalRarity
-            );
-            
-            // Update the data
-            data[user.id] = updatedData;
-            saveData();
-            
-            // Create petal selection buttons
-            const rows = LoadoutHandler.createPetalButtons(
-                data[user.id],
-                loadoutType,
-                slotID,
-                petalToSlotIn
-            );
-            
-            // Count available petals
-            const petalsAvailable = rows.reduce((count, row) => count + row.components.length, 0);
-            
-            // Get response message
-            const response = LoadoutHandler.getResponseMessage(
-                success,
-                alreadyEquipped,
-                petalTypes[petalToSlotIn],
-                slotID,
-                loadoutType,
-                petalsAvailable
-            );
-            
-            // Add loadout text if not an error case
-            if (!alreadyEquipped && petalsAvailable > 0) {
-                const loadoutText = util.makeLoadoutText(user.id, data, isSecondary);
-                response.content = `**New ${isSecondary ? 'secondary ' : ''}loadout:**\n${loadoutText}\n${response.content}`;
-            }
-            
-            // Update the interaction
-            interaction.update({
-                content: response.content,
-                components: rows.length > 0 ? rows : response.components,
-                flags: MessageFlags.Ephemeral
-            });
-        } else if (interaction.customId.includes("slotpetal2-")) {
-            // This is now handled by the slotpetal- case with isSecondary fla
-            interaction.update({
-                content: "This interaction is outdated. Please try again.",
-                flags: MessageFlags.Ephemeral
-            });
+            inventory.slotPetal(interaction, data);
         } else if (interaction.customId === 'loadout-talent') {
             talents.upgradeLoadoutTalent(interaction, data);
         } else if (interaction.customId === 'max_hp-talent') {
