@@ -289,10 +289,17 @@ module.exports = {
                     data[user.id]["grind-info"].mobsLeft -= 1;
                     data[user.id]["grind-info"].mobs[i].dead = true;
                     util.saveData(data);
-                    const row = new ActionRowBuilder();
+                    let rows = [];
+                    let buttonsSoFar = 0;
                     for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
+                        
+                        // build petals
+                        if(buttonsSoFar % 5 == 0) {
+                            rows.push(new ActionRowBuilder());
+                        }
+                        
                         if(data[user.id]["grind-info"].mobs[i].health <= 0) {
-                            row.addComponents(
+                            rows[rows.length - 1].addComponents(
                                 new ButtonBuilder()
                                     .setCustomId(i.toString())
                                     .setLabel(`Defeated ${data[user.id]["grind-info"].mobs[i].name}!`)
@@ -300,15 +307,16 @@ module.exports = {
                                     .setDisabled(true)
                             )
                         } else {
-                            row.addComponents(
+                            rows[rows.length - 1].addComponents(
                                 new ButtonBuilder()
                                     .setCustomId(i.toString())
                                     .setLabel(`Attack ${data[user.id]["grind-info"].mobs[i].name}`)
                                     .setStyle(ButtonStyle.Danger)
                             )
                         }
+                        buttonsSoFar++;
                     }
-                    updatedComponents = [row];
+                    updatedComponents = rows;
                 }
             }
 

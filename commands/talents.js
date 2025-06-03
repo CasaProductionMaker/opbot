@@ -58,6 +58,7 @@ module.exports = {
         data[user.id]["stars"] -= starCost;
         data[user.id]["talents"]["loadout"]++;
         data[user.id]["loadout"].push("-1_0");
+        data[user.id]["second_loadout"].push("-1_0");
         saveData(data);
         
         interaction.update({

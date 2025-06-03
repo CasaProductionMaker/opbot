@@ -8,8 +8,8 @@ const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('
 
 const saveData = util.saveData;
 
-function generateMobs(biome, zone, rarity, userId, data) {
-    let mobAmount = Math.min(Math.round(Math.random() * constants.petalLowercaseRarities.indexOf(rarity) + 2), 5);
+function generateMobs(biome, zone, rarity, userId, data, client) {
+    let mobAmount = Math.round(Math.random() * constants.petalLowercaseRarities.indexOf(rarity) + 2);
     
     // check for poo and honey
     mobAmount += util.pooRepelAmount(userId, data);
@@ -36,7 +36,7 @@ function generateMobs(biome, zone, rarity, userId, data) {
             }
             mobInfo[i] = createMobInfo(mobs[i], mob_rarity);
         } else {
-            mobInfo[i] = handleUltraRarity(mobs[i], mob_rarity, data, interaction);
+            mobInfo[i] = handleUltraRarity(mobs[i], mob_rarity, data, client);
         }
     }
     
@@ -54,8 +54,9 @@ function createMobInfo(mob, rarity) {
     };
 }
 
-function handleUltraRarity(mob, rarity, data, interaction) {
-    if (Math.random() < constants.rareMobSpawn) {
+function handleUltraRarity(mob, rarity, data, client) {
+    if (Math.random() < constants.superMobSpawn) {
+        console.log(`Super mob spawned: ${mob}`);
         if (!data["super-mob"]) {
             data["super-mob"] = {
                 name: mob,
@@ -65,7 +66,7 @@ function handleUltraRarity(mob, rarity, data, interaction) {
                 damagers: {}
             };
             saveData(data);
-            interaction.channel?.send({
+            client.channels.cache.get("1371202463994216588").send({
                 content: `A Super ${mob} has spawned!\nHealth: ${data["super-mob"].health}\nDamage:${data["super-mob"].damage}\nLoot: ${data["super-mob"].loot}`,
                 components: [
                     new ActionRowBuilder()
@@ -78,22 +79,29 @@ function handleUltraRarity(mob, rarity, data, interaction) {
                 ]
             });
         }
-        return null;
     }
     return createMobInfo(mob, rarity);
 }
 
 function createActionRow(mobs) {
-    const row = new ActionRowBuilder();
+    let rows = [];
+    let buttonsSoFar = 0;
     for (let i = 0; i < mobs.length; i++) {
-        row.addComponents(
+        
+        // build petals
+        if(buttonsSoFar % 5 == 0) {
+            rows.push(new ActionRowBuilder());
+        }
+
+        rows[rows.length - 1].addComponents(
             new ButtonBuilder()
                 .setCustomId(i.toString())
                 .setLabel(`Attack ${mobs[i]}`)
                 .setStyle(ButtonStyle.Danger)
         );
+        buttonsSoFar++;
     }
-    return row;
+    return rows;
 }
 
 function createMobList(mobs, mobInfo) {
@@ -105,7 +113,7 @@ function createMobList(mobs, mobInfo) {
 module.exports = {
     name: 'grind',
     description: 'Grind for stars',
-    execute(interaction, data) {
+    execute(interaction, data, client) {
         const biome = interaction.options.get('biome');
         const zone = mobsfile.biomes[biome.value].startingZone;
         const rarity = "common";
@@ -120,7 +128,7 @@ module.exports = {
             return;
         }
 
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome.value, zone, rarity, user.id, data);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome.value, zone, rarity, user.id, data, client);
         const row = createActionRow(mobs);
         
         data[user.id]["grind-info"] = {
@@ -136,12 +144,12 @@ module.exports = {
         const mobList = createMobList(mobs, mobInfo);
         interaction.reply({
             content: `You are grinding in the ${mobsfile.biomes[biome.value].name} for ${rarity} mobs.\n**Zone: ${zone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
-            components: [row], 
+            components: row, 
             flags: MessageFlags.Ephemeral
         });
     },
 
-    continueGrind(interaction, data, saveData) {
+    continueGrind(interaction, data, saveData, client) {
         const user = interaction.user;
         const grindInfo = data[user.id]?.["grind-info"];
         
@@ -158,7 +166,7 @@ module.exports = {
             return;
         }
 
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome, zone, rarity, user.id, data);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome, zone, rarity, user.id, data, client);
         const row = createActionRow(mobs);
         
         data[user.id]["grind-info"] = {
@@ -174,7 +182,7 @@ module.exports = {
         const mobList = createMobList(mobs, mobInfo);
         interaction.update({
             content: `You are grinding in the ${mobsfile.biomes[biome].name} for ${rarity} mobs.\n**Zone: ${zone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`, 
-            components: [row], 
+            components: row, 
             flags: MessageFlags.Ephemeral
         });
     },

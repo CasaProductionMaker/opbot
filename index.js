@@ -106,7 +106,7 @@ client.on('interactionCreate', (interaction) => {
     } else if (interaction.commandName === 'upgrade_talents') {
         talents.execute(interaction, data);
     } else if (interaction.commandName === 'grind') {
-        grind.execute(interaction, data);
+        grind.execute(interaction, data, client);
     } else if (interaction.commandName === 'loadout') {
         profile.execute(interaction, data, saveData, true);
     } else if (interaction.commandName === 'profile') { 
@@ -139,9 +139,9 @@ client.on('interactionCreate', (interaction) => {
         } else if (interaction.customId === "attack-dummy") {
             combat.dummyAttack(interaction, data);
         } else if (interaction.customId === "continue-grind") {
-            grind.continueGrind(interaction, data, saveData);
+            grind.continueGrind(interaction, data, saveData, client);
         } else if (interaction.customId.includes("higher-rarity-")) {
-            advancerarity.execute(interaction, data);
+            advancerarity.execute(interaction, data, client);
         } else if (interaction.customId.includes("craftpetal-")) {
             craft.displayCrafts(interaction, data);
         } else if (interaction.customId.includes("craft-")) {

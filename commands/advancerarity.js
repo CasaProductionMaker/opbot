@@ -18,7 +18,7 @@ const {
 module.exports = {
     name: 'advancerarity',
     description: 'Advances your rarity',
-    execute(interaction, data) {
+    execute(interaction, data, client) {
         const newZone = interaction.customId.split("higher-rarity-")[1];
         const user = interaction.user;
         
@@ -51,7 +51,7 @@ module.exports = {
         }
         
         // Generate mobs for the new zone
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome, newZone, newRarity, user.id, data);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome, newZone, newRarity, user.id, data, client);
         const row = createActionRow(mobs);
         
         // Update grind info with new zone and rarity
@@ -72,7 +72,7 @@ module.exports = {
         // Update the interaction with new zone and mobs
         interaction.update({
             content: `You have advanced to ${newRarity} rarity in ${mobsfile.biomes[biome].name}!\n**Zone: ${newZone}**\nYour health: ${data[user.id].health}\nMobs: \n${mobList}`,
-            components: [row],
+            components: row,
             flags: MessageFlags.Ephemeral
         });
     }

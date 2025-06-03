@@ -47,6 +47,6 @@ export const talentCosts = {
 }
 
 export const rareMobSpawn = 0.05; // chance for mob to be 1 rarity above
-export const superMobSpawn = 0.005; // 0.5% chance
+export const superMobSpawn = 0.5; // 0.5% chance
 export const rareLootChance = 0.05;
 export const targetDummyHealth = 1000000000000000;
