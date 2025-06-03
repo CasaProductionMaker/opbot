@@ -7,6 +7,9 @@ import { petalStats } from "./petals.js";
 import { petalTypes } from "./petals.js";
 import { petalRarities } from "./const.js";
 const dataFile = "saved_data.json";
+const ideasFile = "ideas.json";
+
+
 
 export function getCurrentTime() {
     let date = new Date();

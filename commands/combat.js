@@ -9,13 +9,95 @@ const constants = require('../const');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 const petalStats = petals.petalStats;
+const petalTypes = petals.petalTypes;
 const mobStats = mobsfile.mobStats;
 const petalRarities = constants.petalRarities;
-const petalLowercaseRarities = constants.petalLowercaseRarities;
-const biomes = mobsfile.biomes;
+const petalLowercaseRarities = petalRarities.map(s => s.toLowerCase());
 const dropRarityChances = constants.dropRarityChances;
 const getPetalRarity = util.getPetalRarity;
 const getPetalType = util.getPetalType;
+const saveData = util.saveData;
+const biomes = mobsfile.biomes;
+const isPetalEquipped = util.isPetalEquipped;
+
+// Calculate total damage from a player's loadout
+function calculatePlayerDamage(loadout) {
+    let totalDamage = 0;
+    for (const petal of loadout) {
+        if (petal === "-1_0") continue;
+        const [petalId, rarity] = petal.split("_");
+        totalDamage += (petalStats[petalId]?.damage || 0) * (3 ** (parseInt(rarity) || 0));
+    }
+    return totalDamage;
+}
+
+// Apply damage to a mob, considering armor and other modifiers
+function applyDamageToMob(mob, damage, mobInfo) {
+    if (mobInfo.armour) {
+        const mobRarity = petalRarities.indexOf(mob.rarity);
+        const mobArmour = Math.floor(mobInfo.armour * (3 ** mobRarity));
+        damage = Math.max(1, damage - mobArmour);
+    }
+    mob.health -= Math.floor(damage);
+    return damage;
+}
+
+// Handle mob death and distribute loot
+function handleMobDeath(mob, mobInfo, data, interaction) {
+    const xpGain = Math.floor(mobInfo.xp * (1 + (0.1 * (data[interaction.user.id].talents?.xp_gain || 0))));
+    const starsGain = Math.floor(xpGain * 0.5);
+    
+    data[interaction.user.id]["xp"] = (data[interaction.user.id]["xp"] || 0) + xpGain;
+    data[interaction.user.id]["stars"] = (data[interaction.user.id]["stars"] || 0) + starsGain;
+    
+    // Handle petal drops
+    const dropRarityRoll = Math.random();
+    let dropRarity = 0;
+    for (let i = 0; i < dropRarityChances.length; i++) {
+        if (dropRarityRoll < dropRarityChances[i]) {
+            dropRarity = i;
+            break;
+        }
+    }
+    
+    if (dropRarity > 0) {
+        const petalDrops = mobInfo.drops || [];
+        if (petalDrops.length > 0) {
+            const randomPetal = petalDrops[Math.floor(Math.random() * petalDrops.length)];
+            data[interaction.user.id]["inventory"][randomPetal][dropRarity] = (data[interaction.user.id]["inventory"][randomPetal][dropRarity] || 0) + 1;
+            return `You defeated ${mob.name} and earned ${xpGain} XP and ${starsGain} stars!\nYou also found a ${petalRarities[dropRarity]} ${petalTypes[randomPetal]}!`;
+        }
+    }
+    
+    return `You defeated ${mob.name} and earned ${xpGain} XP and ${starsGain} stars!`;
+}
+
+// Handle super mob death and distribute loot
+function handleSuperMobDeath(superMob, mobInfo, data) {
+    const totalLoot = superMob.loot;
+    const allLooters = {};
+    
+    for (const damagerId in superMob.damagers) {
+        const loot = Math.floor((superMob.damagers[damagerId] / (mobInfo.health * 2187)) * totalLoot);
+        allLooters[damagerId] = loot;
+        data[damagerId] = data[damagerId] || {};
+        data[damagerId]["xp"] = (data[damagerId]["xp"] || 0) + loot;
+        data[damagerId]["stars"] = (data[damagerId]["stars"] || 0) + Math.ceil(loot / 2);
+    }
+    
+    delete data["super-mob"];
+    saveData(data);
+    
+    let lootList = "";
+    for (const damagerId in allLooters) {
+        lootList += `<@${damagerId}>: ${allLooters[damagerId]} XP, ${Math.ceil(allLooters[damagerId] / 2)} stars\n`;
+    }
+    
+    return {
+        content: `The Super ${superMob.name} has been defeated!\n**Loot distribution:** \n${lootList}`,
+        components: []
+    };
+}
 
 module.exports = {
     name: 'combat',
@@ -430,5 +512,136 @@ module.exports = {
         } else {
             interaction.deferUpdate();
         }
+    },
+
+    superAttack(interaction, data) {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        
+        if (data[user.id]["health"] <= 0) {
+            interaction.reply({ content: "You are dead! Use /respawn to respawn.", flags: MessageFlags.Ephemeral });
+            return;
+        }
+        
+        if (!data["super-mob"]) {
+            interaction.reply("The Super is already dead!");
+            return;
+        }
+        
+        const superMob = data["super-mob"];
+        const mobInfo = mobStats[superMob.name];
+        
+        // Initialize damager if needed
+        superMob.damagers[user.id] = superMob.damagers[user.id] || 0;
+        
+        // Calculate player damage
+        const totalPlayerDamage = calculatePlayerDamage(data[user.id]["loadout"]);
+        superMob.damagers[user.id] += totalPlayerDamage;
+        
+        // Apply damage to super mob
+        applyDamageToMob(superMob, totalPlayerDamage, mobInfo);
+        
+        // 1% chance for the mob to hit back
+        if (Math.random() < 0.01) {
+            data[user.id]["health"] -= superMob.damage;
+        }
+        
+        saveData(data);
+        
+        // Check if super mob is defeated
+        if (superMob.health <= 0) {
+            const result = handleSuperMobDeath(superMob, mobInfo, data);
+            interaction.update({
+                ...result,
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
+        
+        // Update interaction with current super mob status
+        interaction.update({
+            content: `A Super ${superMob.name} has spawned!\n` +
+                    `Last damager: <@${user.id}>\n` +
+                    `Health: ${superMob.health}\n` +
+                    `Damage: ${superMob.damage}\n` +
+                    `Loot: ${superMob.loot}`
+        });
+    },
+
+    dummyAttack(interaction, data) {
+        
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+
+        // calculate petal dmg
+        let totalPlayerDamage = 0;
+        let extraInfo = "";
+
+        // check for double damage from faster
+        let doubleDamage = false;
+        let fasterRarity = parseInt(isPetalEquipped(9, user.id, data));
+        if(fasterRarity >= 0) {
+            doubleDamage = (Math.random() < (petalStats[9].rotation * (fasterRarity + 1)));
+        }
+
+        // check if user has bur
+        let bur = 0;
+        for (const petal of data[user.id]["loadout"]) {
+            if(petal.split("_")[0] == 15) {
+                bur = petalStats[15].pierce * (3 ** (petal.split("_")[1] || 0));
+                bur = Math.floor(bur);
+                break;
+            }
+        }
+
+        // check if user has goldenleaf
+        let gleafDmgIncrease = 1;
+        for (const petal of data[user.id]["loadout"]) {
+            if(petal.split("_")[0] == 17) {
+                gleafDmgIncrease = (1.1 ** ((petal.split("_")[1]-2) || 0));
+                break;
+            }
+        }
+        
+        // check all petals for dmg and heals
+        for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
+            for (const petal of data[user.id]["loadout"]) {
+                p_id = petal.split("_")[0];
+                if (p_id == -1) continue; // Skip if petal is -1
+
+                // Stinger
+                if (p_id == 16) { // 35% miss chance
+                    let hitTimes = 0;
+                    let hitRNG = Math.random();
+                    if(hitRNG < 0.65) {
+                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        hitTimes++;
+                    }
+                    
+                    hitRNG = Math.random();
+                    if(hitRNG < 0.65) {
+                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        hitTimes++;
+                    }
+                    extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
+                }
+
+                totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                
+                // apply bur buff multiplied by petal count
+                totalPlayerDamage += bur * (petalStats[p_id].count || 1);
+            }
+        }
+
+        // apply dmg
+        totalPlayerDamage = Math.floor(totalPlayerDamage * gleafDmgIncrease);
+        saveData(data);
+
+        interaction.update({
+            content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): ${totalPlayerDamage}${extraInfo}`, 
+            components: interaction.message.components, 
+            flags: MessageFlags.Ephemeral
+        });
     }
 }

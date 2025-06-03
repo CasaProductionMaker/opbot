@@ -10,6 +10,7 @@ const respawn = require('./commands/respawn')
 const combat = require('./commands/combat')
 const inventory = require('./commands/inventory')
 const advancerarity = require('./commands/advancerarity')
+const admin = require('./commands/admin');
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
 const dataFile = "saved_data.json";
@@ -46,27 +47,10 @@ const biomes = mobs.biomes;
 const mobStats = mobs.mobStats;
 const commands = require('./commands').commands;
 
-// functions
-function editXP(user, value) {
-    let xp = data[user]["xp"] || 0;
-    data[user]["xp"] = xp + value;
-    saveData();
-}
-
 function saveData() {
     fs.writeFileSync(dataFile, JSON.stringify(data, null, 4));
 }
 
-// Gets the petal type from a petal string. Petal string is
-// "n_m" where n is the id and m is the rarity
-function getPetalType(petal) {
-    return petalTypes[petal];
-}
-
-// Gets the petal rarity
-function getPetalRarity(petal) {
-    return petalRarities[petal];
-}
 // Load data
 if(fs.existsSync(dataFile)) {
     data = JSON.parse(fs.readFileSync(dataFile));
@@ -152,96 +136,19 @@ client.on('messageCreate', async (message) => {
 client.on('interactionCreate', (interaction) => {
     // Admin only commands
     if (interaction.commandName === 'xp_edit') {
-        if (!interaction.member.permissions.has("Administrator")) {
-            interaction.reply("You do not have permission to use this command.");
-            return;
-        }
-        const user = interaction.options.get('user');
-        const amount = interaction.options.get('amount');
-        data[user.user.id] = util.fillInProfileBlanks(data[user.user.id] || {});
-        editXP(user.user.id, amount.value);
-        interaction.reply(`Added ${amount.value} XP to ${user.user.username}. Total XP: ${data[user.user.id]["xp"]}`);
+        admin.editXP(interaction, data);
     }
     if (interaction.commandName === 'stars_edit') {
-        if (!interaction.member.permissions.has("Administrator")) {
-            interaction.reply("You do not have permission to use this command.");
-            return;
-        }
-        const user = interaction.options.get('user');
-        const amount = interaction.options.get('amount');
-        data[user.user.id] = util.fillInProfileBlanks(data[user.user.id] || {});
-        data[user.user.id]["stars"] += amount.value;
-        saveData();
-        interaction.reply(`Added ${amount.value} stars to ${user.user.username}. Total stars: ${data[user.user.id]["stars"]}`);
+        admin.editStars(interaction, data);
     }
     if (interaction.commandName === "add_petal") {
-        if(!interaction.member.permissions.has("Administrator"))
-        {
-            interaction.reply("You do not have permission to use this command.");
-            return;
-        }
-        const user = interaction.options.get("user").user;
-        const petal = interaction.options.get("petal").value;
-        const rarity = interaction.options.get("rarity").value;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
-
-        data[user.id]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        data[user.id]["inventory"][petal][rarity] = 1; // Set the rarity to 1
-        saveData();
-        interaction.reply(`Added ${petalRarities[rarity]} ${petalTypes[petal]} to ${user.username}`)
+        admin.addPetal(interaction, data);
     }
     if (interaction.commandName === "remove_petal") {
-        if(!interaction.member.permissions.has("Administrator"))
-        {
-            interaction.reply("You do not have permission to use this command.");
-            return;
-        }
-        const user = interaction.options.get("user").user;
-        const petal = interaction.options.get("petal").value;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
-
-        if(data[user.id]["inventory"][petal] != null) {
-            delete data[user.id]["inventory"][petal]
-            let loadoutIDX = data[user.id]["loadout"].indexOf(petal);
-            if(loadoutIDX >= 0) {
-                data[user.id]["loadout"][loadoutIDX] = -1;
-            }
-        }
-        saveData();
-        interaction.reply(`Removed ${petalTypes[petal]} from ${user.username}`)
+        admin.removePetal(interaction, data);
     }
     if (interaction.commandName === 'spawn_super') {
-        const user = interaction.user;
-        if(!interaction.member.permissions.has("Administrator"))
-        {
-            interaction.reply("You do not have permission to use this command.");
-            return;
-        }
-        const mob = interaction.options.get('mob');
-        data["super-mob"] = {
-            name: mob.value,
-            health: mobStats[mob.value].health * 78125,
-            damage: mobStats[mob.value].damage * 2187,
-            loot: mobStats[mob.value].loot * 16384,
-            damagers: {}
-        }
-        saveData();
-        interaction.channel.send({
-            content: `A Super ${mob.value} has spawned!\nHealth: ${data["super-mob"].health}\nDamage:${data["super-mob"].damage}\nLoot: ${data["super-mob"].loot}`,
-            components: [
-                new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId("super-mob")
-                            .setLabel("Attack!")
-                            .setStyle(ButtonStyle.Danger)
-                    )
-            ]
-        });
-        interaction.reply({
-            content: "Super mob spawned.", 
-            flags: MessageFlags.Ephemeral
-        })
+        admin.spawnSuper(interaction, data);
     }
 
     // Normal commands
@@ -281,15 +188,7 @@ client.on('interactionCreate', (interaction) => {
         });
     }
     if (interaction.commandName === "submit_idea") {
-        const ideadesc = interaction.options.get("idea");
-
-        data["ideas"].push(interaction.user.username + ": " + ideadesc.value);
-        saveData();
-
-        interaction.reply({
-            content: "Idea submitted!", 
-            flags: MessageFlags.Ephemeral
-        })
+        admin.submitIdea(interaction, data);
     }
     if (interaction.commandName === "petal_stats") {
         petals.showPetalStats(interaction);
@@ -328,136 +227,11 @@ client.on('interactionCreate', (interaction) => {
     if (interaction.isButton()) {
         // super mobs to fix
         if (interaction.customId === "super-mob") {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
-            saveData();
-            if(data[user.id]["health"] <= 0) {
-                interaction.reply({content: "You are dead! Use /respawn to respawn.", flags: MessageFlags.Ephemeral});
-                return;
-            }
-            if(!data["super-mob"]) {
-                interaction.reply("The Super is already dead!");
-                return;
-            }
-            const mob = data["super-mob"].name;
-            if(!data["super-mob"].damagers[user.id]) {
-                data["super-mob"].damagers[user.id] = 0;
-            }
-            let totalPlayerDamage = 0;
-            for (const petal of data[user.id]["loadout"]) {
-                if (petal == -1) continue; // Skip if petal is -1
-                totalPlayerDamage += petalStats[petal].damage * (3 ** (data[user.id]["inventory"][petal] || 0));
-            }
-            data["super-mob"].damagers[user.id] += totalPlayerDamage;
-            data["super-mob"].health -= totalPlayerDamage;
-            saveData();
-            if(Math.random() < 0.01) {
-                // Player gets hit by the mob
-                data[user.id]["health"] -= data["super-mob"].damage;
-                saveData();
-            }
-            if(data["super-mob"].health <= 0) {
-                // mob has died so give loot to damagers based off damage dealt
-                let totalLoot = data["super-mob"].loot;
-                let allLooters = {};
-                for (const damager in data["super-mob"].damagers) {
-                    let loot = Math.floor((data["super-mob"].damagers[damager] / (mobStats[data["super-mob"].name].health * 2187)) * totalLoot);
-                    allLooters[damager] = loot;
-                    data[damager]["xp"] = (data[damager]["xp"] || 0) + loot;
-                    data[damager]["stars"] = (data[damager]["stars"] || 0) + Math.ceil(loot / 2);
-                }
-                delete data["super-mob"];
-                saveData();
-                let lootList = "";
-                for (const damager in allLooters) {
-                    lootList += `<@${damager}>: ${allLooters[damager]} XP, ${Math.ceil(allLooters[damager] / 2)} stars\n`;
-                }
-                interaction.update({
-                    content: `The Super ${mob} has been defeated!\n**Loot distribution:** \n ${lootList}`, 
-                    components: [], 
-                    flags: MessageFlags.Ephemeral
-                });
-                return;
-            }
-            interaction.update({
-                content: `A Super ${data["super-mob"].name} has spawned!\nLast damager: <@${user.id}>\nHealth: ${data["super-mob"].health}\nDamage:${data["super-mob"].damage}\nLoot: ${data["super-mob"].loot}`
-            })
+            combat.superAttack(interaction, data);
         } else if (Number.isInteger(parseInt(interaction.customId))) {
             combat.execute(interaction, data);
         } else if (interaction.customId === "attack-dummy") {
-            const user = interaction.user;
-            data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-            saveData();
-
-            // calculate petal dmg
-            let totalPlayerDamage = 0;
-            let extraInfo = "";
-
-            // check for double damage from faster
-            let doubleDamage = false;
-            let fasterRarity = parseInt(isPetalEquipped(9, user.id));
-            if(fasterRarity >= 0) {
-                doubleDamage = (Math.random() < (petalStats[9].rotation * (fasterRarity + 1)));
-            }
-
-            // check if user has bur
-            let bur = 0;
-            for (const petal of data[user.id]["loadout"]) {
-                if(petal.split("_")[0] == 15) {
-                    bur = petalStats[15].pierce * (3 ** (petal.split("_")[1] || 0));
-                    bur = Math.floor(bur);
-                    break;
-                }
-            }
-
-            // check if user has goldenleaf
-            let gleafDmgIncrease = 1;
-            for (const petal of data[user.id]["loadout"]) {
-                if(petal.split("_")[0] == 17) {
-                    gleafDmgIncrease = (1.1 ** ((petal.split("_")[1]-2) || 0));
-                    break;
-                }
-            }
-            
-            // check all petals for dmg and heals
-            for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
-                for (const petal of data[user.id]["loadout"]) {
-                    p_id = petal.split("_")[0];
-                    if (p_id == -1) continue; // Skip if petal is -1
-
-                    // Stinger
-                    if (p_id == 16) { // 35% miss chance
-                        let hitTimes = 0;
-                        let hitRNG = Math.random();
-                        if(hitRNG < 0.65) {
-                            totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                            hitTimes++;
-                        }
-                        
-                        hitRNG = Math.random();
-                        if(hitRNG < 0.65) {
-                            totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                            hitTimes++;
-                        }
-                        extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
-                    }
-
-                    totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                    
-                    // apply bur buff multiplied by petal count
-                    totalPlayerDamage += bur * (petalStats[p_id].count || 1);
-                }
-            }
-
-            // apply dmg
-            totalPlayerDamage = Math.floor(totalPlayerDamage * gleafDmgIncrease);
-            saveData();
-
-            interaction.update({
-                content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): ${totalPlayerDamage}${extraInfo}`, 
-                components: interaction.message.components, 
-                flags: MessageFlags.Ephemeral
-            });
+            combat.dummyAttack(interaction, data);
         } else if (interaction.customId === "continue-grind") {
             grind.continueGrind(interaction, data, saveData);
         } else if (interaction.customId.includes("higher-rarity-")) {
