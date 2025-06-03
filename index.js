@@ -1,12 +1,8 @@
 const petals = require('./petals');
-const profile = require('./commands/profile')
+const inventory = require('./commands/inventory')
 const craft = require('./commands/craft')
 const talents = require('./commands/talents')
 const grind = require('./commands/grind')
-const respawn = require('./commands/respawn')
-const combat = require('./commands/combat')
-const inventory = require('./commands/inventory')
-const advancerarity = require('./commands/advancerarity')
 const admin = require('./commands/admin');
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
@@ -106,13 +102,13 @@ client.on('interactionCreate', (interaction) => {
     } else if (interaction.commandName === 'upgrade_talents') {
         talents.execute(interaction, data);
     } else if (interaction.commandName === 'grind') {
-        grind.execute(interaction, data, client);
+        grind.grind(interaction, data, client);
     } else if (interaction.commandName === 'loadout') {
-        profile.execute(interaction, data, saveData, true);
+        inventory.profile(interaction, data, saveData, true);
     } else if (interaction.commandName === 'profile') { 
-        profile.execute(interaction, data, saveData);
+        inventory.profile(interaction, data, saveData);
     } else if (interaction.commandName === 'respawn') {
-        respawn.execute(interaction, data, saveData);
+        grind.respawn(interaction, data, saveData);
     } else if (interaction.commandName === "edit_loadout") {
         inventory.editLoadout(interaction, data, false);
     } else if (interaction.commandName === "edit_secondary_loadout") {
@@ -126,22 +122,22 @@ client.on('interactionCreate', (interaction) => {
     } else if (interaction.commandName === "swap_loadout_slot") {
         inventory.swapLoadoutSlot(interaction, data);
     } else if (interaction.commandName === "visit_target_dummy") {
-        combat.visitDummy(interaction, data);
+        grind.visitDummy(interaction, data);
     }
 
     // Button handlers
     if (interaction.isButton()) {
         // super mobs to fix
         if (interaction.customId === "super-mob") {
-            combat.superAttack(interaction, data);
+            grind.superAttack(interaction, data);
         } else if (Number.isInteger(parseInt(interaction.customId))) {
-            combat.execute(interaction, data);
+            grind.attackMob(interaction, data);
         } else if (interaction.customId === "attack-dummy") {
-            combat.dummyAttack(interaction, data);
+            grind.dummyAttack(interaction, data);
         } else if (interaction.customId === "continue-grind") {
             grind.continueGrind(interaction, data, saveData, client);
         } else if (interaction.customId.includes("higher-rarity-")) {
-            advancerarity.execute(interaction, data, client);
+            grind.advancerarity(interaction, data, client);
         } else if (interaction.customId.includes("craftpetal-")) {
             craft.displayCrafts(interaction, data);
         } else if (interaction.customId.includes("craft-")) {
