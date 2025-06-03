@@ -4,8 +4,6 @@
 const util = require('../util');
 const petals = require('../petals');
 const mobsfile = require('../mobs');
-const constants = require('../const');
-const LoadoutHandler = require('../loadoutHandler');
 const commands = require('../commands').commands;
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 

@@ -1,7 +1,4 @@
-const constants = require('./const')
-const petals = require('./petals')
-const mobs = require('./mobs')
-const util = require('./util')
+const petals = require('./petals');
 const profile = require('./commands/profile')
 const craft = require('./commands/craft')
 const talents = require('./commands/talents')
@@ -14,14 +11,10 @@ const admin = require('./commands/admin');
 const { TOKEN, GUILD_ID, BOT_ID } = require('./config.json');
 const fs = require('fs');
 const dataFile = "saved_data.json";
-const LoadoutHandler = require('./loadoutHandler');
 let data = {};
 
 // Get Discord js stuff
-const { REST, Routes, Client, IntentsBitField, ApplicationCommandOptionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, MessageFlags } = require('discord.js');
-const { deserialize } = require('v8');
-const { type } = require('os');
-const { get } = require('http');
+const { REST, Routes, Client, IntentsBitField, EmbedBuilder } = require('discord.js');
 
 // Create client obj
 const client = new Client({
@@ -71,7 +64,7 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
     if(message.author.id == 1151946123997618358) {
-        if (message.content == "/send_embed") {
+        if (message.content == "/send_embed") { // bruh what is this
             const embed = new EmbedBuilder()
                 .setTitle("This is a title")
                 .setDescription("This is a description")
@@ -93,6 +86,7 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('interactionCreate', (interaction) => {
+
     // Admin only commands
     if (interaction.commandName === 'xp_edit') {
         admin.editXP(interaction, data);
@@ -114,7 +108,6 @@ client.on('interactionCreate', (interaction) => {
     if (interaction.commandName === 'craft_petal') {
         craft.execute(interaction, data);
     }
-    // Upgrade talents command
     if (interaction.commandName === 'upgrade_talents') {
         talents.execute(interaction, data);
     }
