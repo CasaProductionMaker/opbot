@@ -1,3 +1,6 @@
+// respawn
+// Maybe this could be moved into grind.js?
+
 const util = require('../util');
 
 module.exports = {

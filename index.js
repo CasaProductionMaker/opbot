@@ -37,14 +37,6 @@ const client = new Client({
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
 // Load game constants
-const petalRarities = constants.petalRarities
-const petalCraftChances =  constants.petalCraftChances;
-const petalLowercaseRarities = petalRarities.map(s => s.toLowerCase());
-const dropRarityChances = constants.dropRarityChances;
-const petalTypes = petals.petalTypes;
-const petalStats = petals.petalStats;
-const biomes = mobs.biomes;
-const mobStats = mobs.mobStats;
 const commands = require('./commands').commands;
 
 function saveData() {
@@ -92,43 +84,10 @@ client.on('messageCreate', async (message) => {
             message.reply({ embeds: [embed] });
         }
         if(message.content == "/fix_loadouts") {
-            for (const user in data) {
-                if(!data[user]) continue;
-                
-                data[user]["loadout"].push(-1);
-                data[user]["loadout"].push(-1);
-            }
-            saveData();
-            message.reply("Fixed P2AHs bad loadout system...");
+            admin.fixLoadouts(message, data);
         }
         if(message.content == "/fix_inventory_data") {
-            for (const user in data) {
-                if(!data[user]) continue;
-                
-                if(!data[user]["inventory"]) {
-                    data[user]["inventory"] = {};
-                }
-                if(user == "1151946123997618358" || user == "super-mob" || user == "ideas") continue;
-                
-                for (const petal in data[user]["loadout"]) {
-                    let petalID = data[user]["loadout"][petal];
-                    if (petalID == -1) {
-                        data[user]["loadout"][petal] = "-1_0";
-                        continue;
-                    }
-                    let rarityID = data[user]["inventory"][petalID];
-
-                    data[user]["loadout"][petal] = `${petalID}_${rarityID}`;
-                }
-
-                for (const petal in data[user]["inventory"]) {
-                    let rarityID = data[user]["inventory"][petal];
-                    data[user]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-                    data[user]["inventory"][petal][rarityID] = 1; // Set the rarity to 1
-                }
-            }
-            saveData();
-            message.reply("Fixed Farts Ant Hell's bad inventory data.");
+            admin.fixInventory(message, data);
         }
     }
 });
@@ -178,14 +137,7 @@ client.on('interactionCreate', (interaction) => {
         inventory.editLoadout(interaction, data, true);
     }
     if (interaction.commandName === 'help') {
-        let commandList = "";
-        for (let i = 0; i < commands.length; i++) {
-            commandList += `/${commands[i].name} - ${commands[i].description}\n`;
-        }
-        interaction.reply({
-            content: `**List of commands:**\n${commandList}`,
-            flags: MessageFlags.Ephemeral
-        });
+        admin.help(interaction);
     }
     if (interaction.commandName === "submit_idea") {
         admin.submitIdea(interaction, data);
@@ -197,33 +149,10 @@ client.on('interactionCreate', (interaction) => {
         inventory.swapLoadoutSlot(interaction, data);
     }
     if (interaction.commandName === "visit_target_dummy") {
-        const user = interaction.user;
-        if (!data[user.id]) {
-            data[user.id] = {}
-        }
-        if(data[user.id]["health"] <= 0) {
-            interaction.reply("You are dead! You cannot grind.");
-            return;
-        }
-
-        const row = new ActionRowBuilder();
-        row.addComponents(
-            new ButtonBuilder()
-                .setCustomId("attack-dummy")
-                .setLabel(`Attack Dummy!`)
-                .setStyle(ButtonStyle.Danger)
-        )
-
-        if(!data[user.id]["health"]) data[user.id]["health"] = 30;
-        saveData();
-
-        interaction.reply({
-            content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): 0`, 
-            components: [row], 
-            flags: MessageFlags.Ephemeral
-        });
+        combat.visitDummy(interaction, data);
     }
 
+    // Button handlers
     if (interaction.isButton()) {
         // super mobs to fix
         if (interaction.customId === "super-mob") {

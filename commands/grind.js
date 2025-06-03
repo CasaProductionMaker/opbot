@@ -1,3 +1,6 @@
+// grind.js
+// Handles mob spawning and zone advancement
+
 const mobsfile = require('../mobs');
 const constants = require('../const');
 const util = require('../util');

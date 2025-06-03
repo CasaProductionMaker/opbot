@@ -6,6 +6,7 @@ const petals = require('../petals');
 const mobsfile = require('../mobs');
 const constants = require('../const');
 const LoadoutHandler = require('../loadoutHandler');
+const commands = require('../commands').commands;
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 const petalTypes = petals.petalTypes;
@@ -121,5 +122,58 @@ module.exports = {
             content: "Idea submitted!", 
             flags: MessageFlags.Ephemeral
         })
+    },
+
+    fixLoadouts(message, data) {
+        for (const user in data) {
+            if(!data[user]) continue;
+            
+            data[user]["loadout"].push(-1);
+            data[user]["loadout"].push(-1);
+        }
+        saveData();
+        message.reply("Fixed P2AHs bad loadout system...");
+    },
+
+    fixInventory(message, data) {
+        
+        for (const user in data) {
+            if(!data[user]) continue;
+            
+            if(!data[user]["inventory"]) {
+                data[user]["inventory"] = {};
+            }
+            if(user == "1151946123997618358" || user == "super-mob" || user == "ideas") continue;
+            
+            for (const petal in data[user]["loadout"]) {
+                let petalID = data[user]["loadout"][petal];
+                if (petalID == -1) {
+                    data[user]["loadout"][petal] = "-1_0";
+                    continue;
+                }
+                let rarityID = data[user]["inventory"][petalID];
+
+                data[user]["loadout"][petal] = `${petalID}_${rarityID}`;
+            }
+
+            for (const petal in data[user]["inventory"]) {
+                let rarityID = data[user]["inventory"][petal];
+                data[user]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                data[user]["inventory"][petal][rarityID] = 1; // Set the rarity to 1
+            }
+        }
+        saveData();
+        message.reply("Fixed Farts Ant Hell's bad inventory data.");
+    },
+    
+    help(interaction) {
+        let commandList = "";
+        for (let i = 0; i < commands.length; i++) {
+            commandList += `/${commands[i].name} - ${commands[i].description}\n`;
+        }
+        interaction.reply({
+            content: `**List of commands:**\n${commandList}`,
+            flags: MessageFlags.Ephemeral
+        });
     }
 }

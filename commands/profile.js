@@ -1,3 +1,6 @@
+// profile.js
+// Displays profile information
+
 const util = require('../util')
 
 module.exports = {

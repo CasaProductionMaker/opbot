@@ -102,6 +102,8 @@ function handleSuperMobDeath(superMob, mobInfo, data) {
 module.exports = {
     name: 'combat',
     description: 'Combat',
+
+    // Called when player attacks a normal mob
     execute(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
@@ -565,6 +567,34 @@ module.exports = {
                     `Health: ${superMob.health}\n` +
                     `Damage: ${superMob.damage}\n` +
                     `Loot: ${superMob.loot}`
+        });
+    },
+
+    visitDummy(interaction, data) {
+        const user = interaction.user;
+        if (!data[user.id]) {
+            data[user.id] = {}
+        }
+        if(data[user.id]["health"] <= 0) {
+            interaction.reply("You are dead! You cannot grind.");
+            return;
+        }
+
+        const row = new ActionRowBuilder();
+        row.addComponents(
+            new ButtonBuilder()
+                .setCustomId("attack-dummy")
+                .setLabel(`Attack Dummy!`)
+                .setStyle(ButtonStyle.Danger)
+        )
+
+        if(!data[user.id]["health"]) data[user.id]["health"] = 30;
+        saveData(data);
+
+        interaction.reply({
+            content: `You are testing your loadout on a Target Dummy.\nDPH (Damage Per Hit): 0`, 
+            components: [row], 
+            flags: MessageFlags.Ephemeral
         });
     },
 

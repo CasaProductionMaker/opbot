@@ -15,6 +15,8 @@ const petalCraftChances = constants.petalCraftChances;
 module.exports = {
     name: 'craft',
     description: 'Crafts a petal',
+
+    // Start crafting dialogue
     execute(interaction, data) {
         const user = interaction.user;
         data[user.id] = fillInProfileBlanks(data[user.id] || {});
@@ -40,6 +42,8 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         })
     },
+    
+    // Attempt a craft
     attemptCraft(interaction, data) {
         
         const user = interaction.user;
@@ -129,6 +133,8 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         })
     },
+
+    // Display available crafts
     displayCrafts(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
