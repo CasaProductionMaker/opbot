@@ -19,6 +19,8 @@ const getPetalRarity = util.getPetalRarity;
 module.exports = {
     name: 'inventory',
     description: 'Inventory',
+
+    // swap between loadout and secondary loadout
     swapLoadoutSlot(interaction, data) {
         const user = interaction.user;
         data[user.id] = fillInProfileBlanks(data[user.id] || {});
@@ -40,6 +42,65 @@ module.exports = {
             flags: MessageFlags.Ephemeral
         })
     },
+
+    selectPetalRarity(interaction, data, secondary = false) {
+        
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+        const slot = parseInt(interaction.customId.split("-")[1]);
+        const petal = interaction.customId.split("-")[2];
+
+        let rows = [];
+        let petalsSoFar = 0;
+        for (const rarity in data[user.id]["inventory"][petal]) {
+            console.log("Petal", rarity);
+            if(data[user.id]["inventory"][petal][rarity] <= 0) continue; // skip if no petals of this rarity
+            if(petalsSoFar % 5 == 0) {
+                rows.push(new ActionRowBuilder());
+            }
+
+            let style = ButtonStyle.Primary;
+            let text = `${getPetalRarity(rarity)} ${getPetalType(petal)}`;
+            let dis = false;
+            if(data[user.id]["loadout"].indexOf(`${petal}_${rarity}`) >= 0) {
+                dis = true;
+                if(data[user.id]["loadout"].indexOf(`${petal}_${rarity}`) == slot) {
+                    style = ButtonStyle.Success;
+                    text += ` already in slot ${slot+1}!`;
+                } else {
+                    style = ButtonStyle.Danger;
+                    text += ` in another slot!`;
+                }
+            }
+            rows[rows.length - 1].addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`slotpetal${secondary ? "2" : ""}-${slot}-${petal}-${rarity}`)
+                    .setLabel(text)
+                    .setStyle(style)
+                    .setDisabled(dis)
+            );
+            petalsSoFar++;
+        }
+
+        // Special msg if no petals left in inventory
+        if (petalsSoFar == 0) {
+            interaction.update({
+                content: `You have no ${petalTypes[petal]} left in your inventory!`, 
+                components: [], 
+                flags: MessageFlags.Ephemeral
+            })
+            return;
+        }
+
+        interaction.update({
+            content: `Which ${petalTypes[petal]} do you want to put in slot ${slot+1}?`, 
+            components: rows, 
+            flags: MessageFlags.Ephemeral
+        })
+    },
+
+    // Choose which slot to edit
     editLoadout(interaction, data, secondary = false) {
         const user = interaction.user;
         
@@ -62,6 +123,7 @@ module.exports = {
         })
     },
 
+    // Choose which petal to put in the slot
     editLoadoutSlot(interaction, data, secondary = false) {
         
         const user = interaction.user;
@@ -96,6 +158,7 @@ module.exports = {
         })
     },
 
+    // Do the swapping between loadout and secondary loadout
     swapPetal(interaction, data) {
         
         const user = interaction.user;
@@ -120,6 +183,7 @@ module.exports = {
         });
     }, 
 
+    // Equip petal, send active one back to inventory
     slotPetal(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
