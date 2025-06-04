@@ -231,7 +231,7 @@ function createMobList(mobs, mobInfo) {
     ).join('\n');
 }
 
-function getTotalDamage(data, userID, mobToAttack) {
+function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
     let totalPlayerDamage = 0;
     // check for double damage from faster
     let doubleDamage = false;
@@ -264,7 +264,7 @@ function getTotalDamage(data, userID, mobToAttack) {
             if (p_id == -1) continue; // Skip if petal is -1
 
             // Missile
-            if (p_id == 8) {
+            if (p_id == 8 && !isSuperMob && mobToAttack !== null) {
                 let mobToHit = Math.floor(Math.random() * data[userID]["grind-info"].mobs.length);
                 if(data[userID]["grind-info"].mobs[mobToHit].health > 0) {
                     data[userID]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
@@ -275,7 +275,7 @@ function getTotalDamage(data, userID, mobToAttack) {
             }
 
             // Lightning
-            if (p_id == 11) {
+            if (p_id == 11 && !isSuperMob && mobToAttack !== null) {
                 for (let mobID = 0; mobID < data[userID]["grind-info"].mobs.length; mobID++)
                 if(data[userID]["grind-info"].mobs[mobID].health > 0) {
                     data[userID]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
@@ -284,7 +284,7 @@ function getTotalDamage(data, userID, mobToAttack) {
             }
 
             // Glass
-            if (p_id == 12) {
+            if (p_id == 12 && !isSuperMob && mobToAttack !== null) {
                 let mobToHit = Math.floor(Math.random() * data[userID]["grind-info"].mobs.length);
                 if(data[userID]["grind-info"].mobs[mobToHit].health > 0 && mobToHit != mobToAttack) {
                     data[userID]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
@@ -311,13 +311,6 @@ function getTotalDamage(data, userID, mobToAttack) {
                 extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
             }
 
-            // Bubble
-            if (p_id == 18) {
-                if(bubbleRarity == -1) continue;
-                if(bubbleRarity < grindRarity) continue;
-                skipZone = true;
-            }
-
             // Triangle
             if (p_id == 22) {
                 totalPlayerDamage += (petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0)) * triangle_count);
@@ -326,13 +319,15 @@ function getTotalDamage(data, userID, mobToAttack) {
 
             totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
             
-            // check mob armour
-            let mobInfo = mobStats[data[userID]["grind-info"].mobs[mobToAttack].name]
-            if(mobInfo.armour) {
-                let mobRarity = petalRarities.indexOf(data[userID]["grind-info"].mobs[mobToAttack].rarity)
-                let mobArmour = mobInfo.armour * (3 ** mobRarity);
-                mobArmour = Math.floor(mobArmour);
-                totalPlayerDamage -= mobArmour;
+            if(mobToAttack !== null && !isSuperMob) {
+                // check mob armour
+                let mobInfo = mobStats[data[userID]["grind-info"].mobs[mobToAttack].name]
+                if(mobInfo.armour) {
+                    let mobRarity = petalRarities.indexOf(data[userID]["grind-info"].mobs[mobToAttack].rarity)
+                    let mobArmour = mobInfo.armour * (3 ** mobRarity);
+                    mobArmour = Math.floor(mobArmour);
+                    totalPlayerDamage -= mobArmour;
+                }
             }
             
             // apply bur buff multiplied by petal count
@@ -466,6 +461,9 @@ module.exports = {
                     bubbleRarity = parseInt(petal.split("_")[1]);
                     break;
                 }
+            }
+            if(bubbleRarity >= 0 && bubbleRarity >= grindRarity) {
+                skipZone = true;
             }
 
             // check if user has talisman
@@ -736,10 +734,10 @@ module.exports = {
             // generate mob list to show in message
             let mobList = "";
             for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
-                mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${data[user.id]["grind-info"].mobs[i].health.toFixed(2)} HP, ${data[user.id]["grind-info"].mobs[i].damage.toFixed(2)} DMG\n`;
+                mobList += `${data[user.id]["grind-info"].mobs[i].rarity} ${data[user.id]["grind-info"].mobs[i].name}: ${util.cutDecimals(data[user.id]["grind-info"].mobs[i].health)} HP, ${util.cutDecimals(data[user.id]["grind-info"].mobs[i].damage)} DMG\n`;
             }
             interaction.update({
-                content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.\n**Zone: ${data[user.id]["grind-info"].zone}**${extraInfo}\nYour health: ${data[user.id].health.toFixed(2)}\nMobs: \n${mobList}`, 
+                content: `You are grinding in the ${biomes[data[user.id]["grind-info"].biome].name} for ${data[user.id]["grind-info"].rarity} mobs.\n**Zone: ${data[user.id]["grind-info"].zone}**${extraInfo}\nYour health: ${util.cutDecimals(data[user.id].health)}\nMobs: \n${mobList}`, 
                 components: updatedComponents, 
                 flags: MessageFlags.Ephemeral
             });
@@ -769,7 +767,7 @@ module.exports = {
         superMob.damagers[user.id] = superMob.damagers[user.id] || 0;
         
         // Calculate player damage
-        const totalPlayerDamage = calculatePlayerDamage(data[user.id]["loadout"]);
+        const totalPlayerDamage = getTotalDamage(data, user.id, null, true);
         superMob.damagers[user.id] += totalPlayerDamage;
         
         // Apply damage to super mob
@@ -840,31 +838,6 @@ module.exports = {
         let totalPlayerDamage = 0;
         let extraInfo = "";
 
-        // check for double damage from faster
-        let doubleDamage = false;
-        let fasterRarity = parseInt(isPetalEquipped(9, user.id, data));
-        if(fasterRarity >= 0) {
-            doubleDamage = (Math.random() < (petalStats[9].rotation * (fasterRarity + 1)));
-        }
-
-        // check if user has bur
-        let bur = 0;
-        for (const petal of data[user.id]["loadout"]) {
-            if(petal.split("_")[0] == 15) {
-                bur = petalStats[15].pierce * (3 ** (petal.split("_")[1] || 0));
-                bur = Math.floor(bur);
-                break;
-            }
-        }
-
-        // get triangle count
-        let triangle_count = 0;
-        for (const petal of data[user.id]["loadout"]) {
-            if (petal.split("_")[0] == 22) {
-                triangle_count += 1;
-            }
-        }
-
         // check if user has goldenleaf
         let gleafDmgIncrease = 1;
         for (const petal of data[user.id]["loadout"]) {
@@ -874,41 +847,7 @@ module.exports = {
             }
         }
         
-        // check all petals for dmg and heals
-        for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
-            for (const petal of data[user.id]["loadout"]) {
-                p_id = petal.split("_")[0];
-                if (p_id == -1) continue; // Skip if petal is -1
-
-                // Stinger
-                if (p_id == 16) { // 35% miss chance
-                    let hitTimes = 0;
-                    let hitRNG = Math.random();
-                    if(hitRNG < 0.65) {
-                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                        hitTimes++;
-                    }
-                    
-                    hitRNG = Math.random();
-                    if(hitRNG < 0.65) {
-                        totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                        hitTimes++;
-                    }
-                    extraInfo += `\nYour Stinger hit ${hitTimes} time(s)!`;
-                }
-
-                // Triangle
-                if (p_id == 22) {
-                    totalPlayerDamage += (petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0)) * triangle_count);
-                    continue;
-                }
-
-                totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
-                
-                // apply bur buff multiplied by petal count
-                totalPlayerDamage += bur * (petalStats[p_id].count || 1);
-            }
-        }
+        totalPlayerDamage = getTotalDamage(data, user.id); // Calculate total damage from loadout
 
         // apply dmg
         totalPlayerDamage = Math.floor(totalPlayerDamage * gleafDmgIncrease);

@@ -57,7 +57,7 @@ module.exports = {
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
         if(!data[user.id]["inventory"][petal]) data[user.id]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        data[user.id]["inventory"][petal][rarity] = 1; // Set the rarity to 1
+        data[user.id]["inventory"][petal][rarity] += 1; // Set the rarity to 1
         saveData(data);
         interaction.reply(`Added ${getPetalRarity(rarity)} ${getPetalType(petal)} to ${user.username}`)
     },
@@ -67,16 +67,12 @@ module.exports = {
 
         const user = interaction.options.get("user").user;
         const petal = interaction.options.get("petal").value;
+        const rarity = interaction.options.get("rarity").value;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
-        if(data[user.id]["inventory"][petal] != null) {
-            delete data[user.id]["inventory"][petal]
-            let loadoutIDX = data[user.id]["loadout"].indexOf(petal);
-            if(loadoutIDX >= 0) {
-                data[user.id]["loadout"][loadoutIDX] = -1;
-            }
-        }
-        saveData();
+        console.log(data[user.id]["inventory"][petal][rarity]);
+        data[user.id]["inventory"][petal][rarity] -= 1;
+        saveData(data);
         interaction.reply(`Removed ${getPetalRarity(petal)} ${getPetalType(petal)} from ${user.username}`)
     },
 

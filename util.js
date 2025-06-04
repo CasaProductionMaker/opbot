@@ -154,6 +154,11 @@ export function honeyAttractAmount(userid, data) {
     return honeyModifier;
 }
 
+// function to cut off the decimals if needed
+export function cutDecimals(num, decimals = 2) {
+    return Math.floor(num * (10 ** decimals)) / (10 ** decimals);
+}
+
 export function saveData(data) {
     fs.writeFileSync(dataFile, JSON.stringify(data, null, 4));
 }

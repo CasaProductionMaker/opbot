@@ -197,6 +197,12 @@ export const commands = [
                 description: "The petal to remove", 
                 type: ApplicationCommandOptionType.Number, 
                 required: true
+            }, 
+            {
+                name: "rarity", 
+                description: "The rarity of petal to remove", 
+                type: ApplicationCommandOptionType.Number, 
+                required: true
             }
         ]
     }, 
