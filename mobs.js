@@ -1151,7 +1151,7 @@ export const mobStats = {
         health: 10,
         damage: 0.5,
         loot: 3,
-        petalDrop: [6],
+        petalDrop: [6, 22],
         reroll: true
     },
     "Firefly": {

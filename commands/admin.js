@@ -56,7 +56,7 @@ module.exports = {
         const rarity = interaction.options.get("rarity").value;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
-        data[user.id]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        if(!data[user.id]["inventory"][petal]) data[user.id]["inventory"][petal] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
         data[user.id]["inventory"][petal][rarity] = 1; // Set the rarity to 1
         saveData(data);
         interaction.reply(`Added ${getPetalRarity(rarity)} ${getPetalType(petal)} to ${user.username}`)

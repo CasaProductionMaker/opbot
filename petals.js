@@ -24,7 +24,8 @@ export const petalTypes = [
     "Bubble", 
     "Poo", 
     "Talisman", // 20
-    "Honey"
+    "Honey", 
+    "Triangle"
 ]
 
 export const petalStats = [
@@ -190,6 +191,13 @@ export const petalStats = [
         heal: 0,
         max_health: 0, 
         attraction: 0.1 // 10% chance to attract a mob + 5% per rarity
+    },
+    {
+        name: "Triangle",
+        description: "Does more damage based on how many you have equipped.",
+        damage: 2,
+        heal: 0,
+        max_health: 0
     }
 ]
 
