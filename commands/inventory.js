@@ -106,19 +106,27 @@ module.exports = {
         
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
-        let row = new ActionRowBuilder();
+        let rows = [];
+        let buttonsSoFar = 0;
         for (let i = 0; i < data[user.id][secondary ? "second_loadout" : "loadout"].length; i++) {
-            row.addComponents(
+            
+            // build petals
+            if(buttonsSoFar % 5 == 0) {
+                rows.push(new ActionRowBuilder());
+            }
+
+            rows[rows.length - 1].addComponents(
                 new ButtonBuilder()
                     .setCustomId(`editloadout${secondary ? "2" : ""}-${i}`)
                     .setLabel(`Slot ${i+1}`)
                     .setStyle(ButtonStyle.Primary)
-            )
+            );
+            buttonsSoFar++;
         }
         
         interaction.reply({
             content: `Which slot do you want to update?\n\nCurrent Loadout:\n${util.makeLoadoutText(user.id, data, secondary)}`, 
-            components: [row], 
+            components: rows, 
             flags: MessageFlags.Ephemeral
         })
     },

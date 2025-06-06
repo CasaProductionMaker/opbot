@@ -233,6 +233,7 @@ function createMobList(mobs, mobInfo) {
 
 function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
     let totalPlayerDamage = 0;
+    let extraInfo = "";
     // check for double damage from faster
     let doubleDamage = false;
     if(data[userID]["loadout"].includes(9)) {
@@ -342,7 +343,8 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
             }
         }
     }
-    return Math.max(totalPlayerDamage, 0);
+    totalPlayerDamage = Math.max(totalPlayerDamage, 0);
+    return { totalPlayerDamage , extraInfo };
 }
 
 module.exports = {
@@ -354,9 +356,7 @@ module.exports = {
         const rarity = "common";
         const user = interaction.user;
         
-        if (!data[user.id]) {
-            data[user.id] = { health: 30 };
-        }
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
         
         if (data[user.id]["health"] <= 0) {
             interaction.reply("You are dead! You cannot grind.");
@@ -394,7 +394,7 @@ module.exports = {
         }
         
         const { biome, rarity, zone } = grindInfo;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || { health: 30 });
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
         
         if (data[user.id]["health"] <= 0) {
             interaction.reply("You are dead! You cannot grind.");
@@ -474,7 +474,7 @@ module.exports = {
                 }
             }
 
-            totalPlayerDamage = getTotalDamage(data, user.id, mobToAttack); // Calculate total damage from loadout
+            ({ totalPlayerDamage, extraInfo } = getTotalDamage(data, user.id, mobToAttack)); // Calculate total damage from loadout
 
             // apply dmg
             data[user.id]["grind-info"].mobs[mobToAttack].health -= Math.floor(totalPlayerDamage * gleafDmgIncrease);
@@ -767,7 +767,7 @@ module.exports = {
         superMob.damagers[user.id] = superMob.damagers[user.id] || 0;
         
         // Calculate player damage
-        const totalPlayerDamage = getTotalDamage(data, user.id, null, true);
+        const { totalPlayerDamage } = getTotalDamage(data, user.id, null, true);
         superMob.damagers[user.id] += totalPlayerDamage;
         
         // Apply damage to super mob
@@ -802,9 +802,7 @@ module.exports = {
 
     visitDummy(interaction, data) {
         const user = interaction.user;
-        if (!data[user.id]) {
-            data[user.id] = {}
-        }
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
         if(data[user.id]["health"] <= 0) {
             interaction.reply("You are dead! You cannot grind.");
             return;
@@ -817,8 +815,6 @@ module.exports = {
                 .setLabel(`Attack Dummy!`)
                 .setStyle(ButtonStyle.Danger)
         )
-
-        if(!data[user.id]["health"]) data[user.id]["health"] = 30;
         saveData(data);
 
         interaction.reply({
@@ -847,7 +843,7 @@ module.exports = {
             }
         }
         
-        totalPlayerDamage = getTotalDamage(data, user.id); // Calculate total damage from loadout
+        ({ totalPlayerDamage, extraInfo } = getTotalDamage(data, user.id)); // Calculate total damage from loadout
 
         // apply dmg
         totalPlayerDamage = Math.floor(totalPlayerDamage * gleafDmgIncrease);
@@ -884,7 +880,7 @@ module.exports = {
         const newRarity = constants.petalLowercaseRarities[rarityIndex + 1];
         
         // Initialize user data if needed
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || { health: 30 });
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
         
         // Check if user is alive
         if (data[user.id].health <= 0) {
@@ -921,6 +917,7 @@ module.exports = {
 
     respawn(interaction, data, saveData) {
         const user = interaction.user;
+        console.log("Respawn etc", data[user.id].health)
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
         if(data[user.id]["health"] > 0) {
             interaction.reply("You are not dead! You cannot respawn.");
