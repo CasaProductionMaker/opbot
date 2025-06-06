@@ -123,6 +123,8 @@ client.on('interactionCreate', (interaction) => {
         inventory.swapLoadoutSlot(interaction, data);
     } else if (interaction.commandName === "visit_target_dummy") {
         grind.visitDummy(interaction, data);
+    } else if (interaction.commandName === "inventory") {
+        inventory.inventory(interaction, data, saveData)
     }
 
     // Button handlers

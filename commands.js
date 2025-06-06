@@ -270,5 +270,16 @@ export const commands = [
     {
         name: "visit_target_dummy", 
         description: "Visit the target dummy to test your loadout and see how much damage it does."
+    }, 
+    {
+        name: "inventory", 
+        description: "Get your petal inventory", 
+        options: [
+            {
+                name: "user", 
+                description: "The user to get inventory of. If not provided, it will get your inventory.",
+                type: ApplicationCommandOptionType.User
+            }
+        ]
     }
 ];
