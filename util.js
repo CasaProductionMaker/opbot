@@ -12,6 +12,7 @@ export function getCurrentTime() {
     let date = new Date();
     return date.getTime();
 }
+
 export function fillInProfileBlanks(profile) {
     if (!profile.xp) profile.xp = 0;
     profile.level = Math.floor(Math.sqrt(profile.xp) * 0.6);
@@ -23,8 +24,17 @@ export function fillInProfileBlanks(profile) {
     if (!profile.talents) profile.talents = {
         "loadout": 2,
         "evasion": 0,
-        "max_hp": 0
+        "max_hp": 0,
+        "rare_drop_rate": 0,
+        "extra_petal_drops": 0
     };
+
+    let talent_list = ["loadout", "evasion", "max_hp", "rare_drop_rate", "extra_petal_drops"];
+
+    for (const talent of talent_list) {
+        if (!profile.talents[talent]) profile.talents[talent] = 0;
+    }
+
     let totalMH = 0;
     for(let i = 0; i < profile.talents.loadout; i++) {
         // Add empty slots if needed
