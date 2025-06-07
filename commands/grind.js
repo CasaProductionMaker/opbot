@@ -567,7 +567,8 @@ module.exports = {
                 // calc petal drops
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
                     // get xp for the mob (no rare loot applied)
-                    totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity));
+                    let mobRarityID = petalRarities.indexOf(data[user.id]["grind-info"].mobs[i].rarity);
+                    totalXP += data[user.id]["grind-info"].mobs[i].loot * (4 ** mobRarityID);
 
                     let petalRolls = 1;
                     if(gotRareLoot) {
@@ -577,7 +578,7 @@ module.exports = {
                         for (const p of mobStats[data[user.id]["grind-info"].mobs[i].name].petalDrop) {
                             const randomLootDropChance = Math.random() * 2;
                             if(randomLootDropChance <= 1.0) {
-                                const grindRarity = petalLowercaseRarities.indexOf(data[user.id]["grind-info"].rarity);
+                                const grindRarity = mobRarityID;
                                 let petalToDrop = p;
 
                                 if(randomLootDropChance <= dropRarityChances[grindRarity][0]) {
@@ -622,7 +623,7 @@ module.exports = {
                     totalXP *= 5;
                 }
                 util.editXP(user.id, totalXP, data);
-                data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 2);
+                data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 5);
 
                 // Update player inventory with drops
                 let petalDropText = "\n**New petals dropped!**";
