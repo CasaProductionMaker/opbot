@@ -70,7 +70,6 @@ export function getPetalDamage(petal, rarity) {
 
 // Returns a string of the petal, like "Common Light (2 Damage): 5x"
 export function petalToText(petal, inter, data, includeNumber = true) {
-    console.log(data[inter.user.id].inventory[petal])
     let petalAmounts = data[inter.user.id].inventory[petal];
     
     // check if user has any of the petal

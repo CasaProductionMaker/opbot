@@ -18,14 +18,15 @@ const getPetalRarity = util.getPetalRarity;
 
 function getInventoryPage(data, inter, page) {
     const inventory = data[inter.user.id].inventory;
-    const itemsPerPage = 10; // Number of items to show per page
+    const itemsPerPage = 5; // Number of items to show per page
     const startIndex = page * itemsPerPage;
-    const endIndex = Math.max(startIndex + itemsPerPage, Object.keys(inventory).length);
+    const indexList = Object.keys(inventory);
+    const endIndex = Math.min(startIndex + itemsPerPage, Object.keys(inventory).length);
     
     // inventory text
     let invText = "";
     for(let i = startIndex; i < endIndex; i++) {
-        invText += util.petalToText(i, inter, data);
+        invText += util.petalToText(indexList[i], inter, data);
     }
     
     return invText;
@@ -310,19 +311,70 @@ module.exports = {
         finalText = `**Inventory**\n${invText}`;
 
         // create buttons for pagination
-        const row = new ActionRowBuilder();
+        let rows = [];
+        let buttonsSoFar = 0;
         for (let i = 0; i < Math.ceil(Object.keys(data[inter.user.id].inventory).length / 10); i++) {
-            row.addComponents(
+            // build petals
+            if(buttonsSoFar % 5 == 0) {
+                rows.push(new ActionRowBuilder());
+            }
+
+            rows[rows.length - 1].addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`invpage-${i}`)
+                    .setCustomId(`invpage-${i}-${inter.user.id}`)
                     .setLabel(`Page ${i + 1}`)
                     .setStyle(ButtonStyle.Primary)
             );
+            buttonsSoFar++;
         }
     
         interaction.reply({
             content: finalText, 
-            components: [row],
+            components: rows,
+            flags: MessageFlags.Ephemeral
+        });
+    }, 
+
+    // switch to a certain inventory page
+    invpage(interaction, data, saveData) {
+        // generate a fake inter to plug into petalToText()
+        const inter = {
+            user: {
+                id: interaction.customId.split("-")[2]
+            }
+        }
+        const page = parseInt(interaction.customId.split("-")[1])
+        data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
+        saveData();
+
+        // get inv text
+        let invText = getInventoryPage(data, inter, page);
+
+        // print final text
+        let finalText = ""
+        finalText = `**Inventory**\n${invText}`;
+
+        // create buttons for pagination
+        let rows = [];
+        let buttonsSoFar = 0;
+        for (let i = 0; i < Math.ceil(Object.keys(data[inter.user.id].inventory).length / 5); i++) {
+            // build petals
+            if(buttonsSoFar % 5 == 0) {
+                rows.push(new ActionRowBuilder());
+            }
+
+            rows[rows.length - 1].addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`invpage-${i}-${inter.user.id}`)
+                    .setLabel(`Page ${i + 1}`)
+                    .setStyle(ButtonStyle.Primary)
+            );
+            buttonsSoFar++;
+        }
+    
+        interaction.update({
+            content: finalText, 
+            components: rows,
             flags: MessageFlags.Ephemeral
         });
     }

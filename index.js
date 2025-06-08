@@ -160,6 +160,8 @@ client.on('interactionCreate', (interaction) => {
             talents.upgradeHPTalent(interaction, data);
         } else if (interaction.customId.includes("swappetal-")) {
             inventory.swapPetal(interaction, data);
+        } else if (interaction.customId.includes("invpage-")) {
+            inventory.invpage(interaction, data, saveData);
         }
     }
 });
