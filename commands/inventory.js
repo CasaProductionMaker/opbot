@@ -16,6 +16,21 @@ const makeLoadoutText = util.makeLoadoutText;
 const getPetalType = util.getPetalType;
 const getPetalRarity = util.getPetalRarity;
 
+function getInventoryPage(data, inter, page) {
+    const inventory = data[inter.user.id].inventory;
+    const itemsPerPage = 10; // Number of items to show per page
+    const startIndex = page * itemsPerPage;
+    const endIndex = Math.max(startIndex + itemsPerPage, Object.keys(inventory).length);
+    
+    // inventory text
+    let invText = "";
+    for(let i = startIndex; i < endIndex; i++) {
+        invText += util.petalToText(i, inter, data);
+    }
+    
+    return invText;
+}
+
 module.exports = {
     name: 'inventory',
     description: 'Inventory',
@@ -279,23 +294,35 @@ module.exports = {
             content: finalText
         });
     }, 
+
+    // get the inventory of user in pages
     inventory(interaction, data, saveData) {
         const inter = interaction.options.get('user') || interaction;
         data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
         saveData();
-        
-        // inventory text
-        let invText = "";
-        for(const petal in data[inter.user.id].inventory) {
-            invText += util.petalToText(petal, inter, data);
-        }
+
+        // get inv text
+        let invText = getInventoryPage(data, inter, 0);
+
 
         // print final text
         let finalText = ""
         finalText = `**Inventory**\n${invText}`;
+
+        // create buttons for pagination
+        const row = new ActionRowBuilder();
+        for (let i = 0; i < Math.ceil(Object.keys(data[inter.user.id].inventory).length / 10); i++) {
+            row.addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`invpage-${i}`)
+                    .setLabel(`Page ${i + 1}`)
+                    .setStyle(ButtonStyle.Primary)
+            );
+        }
     
         interaction.reply({
             content: finalText, 
+            components: [row],
             flags: MessageFlags.Ephemeral
         });
     }
