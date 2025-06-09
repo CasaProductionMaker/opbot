@@ -158,6 +158,8 @@ client.on('interactionCreate', (interaction) => {
             talents.upgradeLoadoutTalent(interaction, data);
         } else if (interaction.customId === 'max_hp-talent') {
             talents.upgradeHPTalent(interaction, data);
+        } else if (interaction.customId === 'rare_drop_rate-talent') {
+            talents.upgradeRareLootChance(interaction, data);
         } else if (interaction.customId.includes("swappetal-")) {
             inventory.swapPetal(interaction, data);
         } else if (interaction.customId.includes("invpage-")) {

@@ -43,7 +43,8 @@ export const dropRarityChances = [
 export const talentCosts = {
     "loadout": [0, 0, 15, 100, 3000, 10000, 300000, 1000000],
     "evasion": [],
-    "max_hp": [10, 50, 250, 1250, 6250, 31250, 156250, 444444]
+    "max_hp": [10, 50, 250, 1250, 6250, 31250, 156250, 444444], 
+    "rare_drop_rate": [100, 500, 10000, 500000]
 }
 
 export const rareMobSpawn = 0.05; // chance for mob to be 1 rarity above

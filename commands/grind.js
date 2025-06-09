@@ -562,7 +562,8 @@ module.exports = {
             if (data[user.id]["grind-info"].mobsLeft <= 0) {
                 let totalXP = 0;
                 let petalDrops = [];
-                let gotRareLoot = Math.random() < constants.rareLootChance;
+                let rareLootChance = constants.rareLootChance * (data[user.id].talents["rare_drop_rate"] + 1);
+                let gotRareLoot = Math.random() < rareLootChance;
 
                 // calc petal drops
                 for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {

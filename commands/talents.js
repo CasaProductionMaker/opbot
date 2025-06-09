@@ -11,8 +11,9 @@ module.exports = {
     execute(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        util.saveData(data);
         
-        let finalText = `**Current talents**\n*Loadout:* Level ${data[user.id]["talents"]["loadout"]}\n*Evasion:* Level ${data[user.id]["talents"]["evasion"]}\n*Max HP:* Level ${data[user.id]["talents"]["max_hp"]}\n\nSelect a talent to upgrade:`;
+        let finalText = `**Current talents**\n*Loadout:* Level ${data[user.id]["talents"]["loadout"]}\n*Evasion:* Level ${data[user.id]["talents"]["evasion"]}\n*Max HP:* Level ${data[user.id]["talents"]["max_hp"]}\n*Rare Loot Chance:* Level ${data[user.id]["talents"]["rare_drop_rate"]}\n\nSelect a talent to upgrade:`;
 
         let row = new ActionRowBuilder();
 
@@ -79,6 +80,22 @@ module.exports = {
         
         interaction.update({
             content: `You have leveled up your max hp for ${starCost} stars!`, 
+            components: [], 
+            flags: MessageFlags.Ephemeral
+        })
+    },
+    upgradeRareLootChance(interaction, data) {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+        let starCost = constants.talentCosts.max_hp[data[user.id]["talents"]["rare_drop_rate"]]
+        data[user.id]["stars"] -= starCost;
+        data[user.id]["talents"]["rare_drop_rate"]++;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+        
+        interaction.update({
+            content: `You have leveled up your chance to get rare loot for ${starCost} stars!`, 
             components: [], 
             flags: MessageFlags.Ephemeral
         })
