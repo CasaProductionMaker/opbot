@@ -1021,7 +1021,7 @@ export const mobStats = {
     }, 
     "Spider": {
         health: 8, 
-        damage: 3, 
+        damage: 2.5, 
         loot: 5, 
         petalDrop: [9], 
         reroll: false
@@ -1041,7 +1041,7 @@ export const mobStats = {
         reroll: false
     },
     "Sandstorm": {
-        health: 10, 
+        health: 9, 
         damage: 4, 
         loot: 5, 
         petalDrop: [12], 

@@ -30,13 +30,13 @@ export const petalCraftChances = [
 
 export const dropRarityChances = [
     [0, 0.75], 
+    [0.1, 0.6], 
     [0.1, 0.8], 
-    [0.05, 0.9], 
-    [0.01, 0.95], 
-    [0.05, 0.97],
-    [0.2, 0.99], 
-    [0.8, 0.999], //0.1% chance for ultra drop
-    [0.6, 0.9999] // 0.01% chance for super drop
+    [0.05, 0.85], 
+    [0.05, 0.95],
+    [0.05, 0.99], 
+    [0.83, 99.9995], //0.05% chance for ultra drop
+    [0.7, 0.99999] // 0.001% chance for super drop
 ]
 
 // Cost in stars for each level of talents, starting at 0.

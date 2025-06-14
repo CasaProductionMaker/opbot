@@ -123,8 +123,8 @@ export function makeLoadoutText(userid, data, secondary = false) {
 
 // checks if a petal is equipped. If yes, returns rarity; else returns -1
 export function isPetalEquipped(petal, userid, data) {
-    for (const p in data[userid]["loadout"]) {
-        if(p.split("_")[0] == petal) {
+    for (const p of data[userid]["loadout"]) {
+        if(parseInt(p.split("_")[0]) == petal) {
             return p.split("_")[1]
         }
     }
