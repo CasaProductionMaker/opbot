@@ -25,7 +25,6 @@ function generateMobs(biome, zone, rarity, userId, data, client) {
     // check for poo and honey
     mobAmount += util.pooRepelAmount(userId, data);
     mobAmount += util.honeyAttractAmount(userId, data);
-    console.log(mobAmount)
     mobAmount = Math.max(mobAmount, 1);
     
     let mobs = [];
@@ -471,7 +470,7 @@ module.exports = {
             let talismanChance = 0;
             for (const petal of data[user.id]["loadout"]) {
                 if(petal.split("_")[0] == 20) {
-                    talismanChance = petalStats[20].evasion + (0.1 * (parseInt(petal.split("_")[1]) || 0));
+                    talismanChance = petalStats[20].evasion + (0.05 * (parseInt(petal.split("_")[1]) || 0));
                 }
             }
 

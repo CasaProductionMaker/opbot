@@ -209,10 +209,14 @@ export function showPetalStats(interaction) {
     for (const [stat, val] of Object.entries(petalStats[petal])) {
         if(val <= 0 && stat != "damage") continue;
         if(typeof val != "number") continue;
-        let unscaled_stats = ["rotation", "count", "smell", "evasion", "attraction", "dmg_increase"];
+        let unscaled_stats = ["rotation", "count", "smell", "attraction", "dmg_increase"];
         // TODO fix scaling display
         if(unscaled_stats.includes(stat)) {
             statsText += `**${stat}:** ${val * (rarity + 1)}\n`
+            continue;
+        }
+        if(stat == "evasion") {
+            statsText += `**${stat}:** ${val + (rarity * 0.05)}\n`
             continue;
         }
         if(Number.isFinite(parseInt(val))) {
