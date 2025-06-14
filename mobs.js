@@ -1188,5 +1188,12 @@ export const mobStats = {
         loot: 1.5,
         petalDrop: [5],
         reroll: false
+    },
+    "Crab": {
+        health: 4,
+        damage: 3,
+        loot: 3,
+        petalDrop: [8],
+        reroll: false
     }
 }
