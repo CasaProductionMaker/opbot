@@ -142,6 +142,8 @@ client.on('interactionCreate', (interaction) => {
             grind.advancerarity(interaction, data, client);
         } else if (interaction.customId.includes("craftpetal-")) {
             craft.displayCrafts(interaction, data);
+        } else if (interaction.customId.includes("megacraft-")) {
+            craft.attemptMegaCraft(interaction, data);
         } else if (interaction.customId.includes("craft-")) {
             craft.attemptCraft(interaction, data);
         } else if (interaction.customId.includes("editloadout-")) {
