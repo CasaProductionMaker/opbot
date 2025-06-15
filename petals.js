@@ -2,6 +2,18 @@
 // Defines petals
 // Edited by stormlet on 5/29/2025
 
+const petalRarities = [
+    "Common",       // 0
+    "Unusual",      // 1
+    "Rare",         // 2
+    "Epic",         // 3
+    "Legendary",    // 4
+    "Mythic",       // 5
+    "Ultra",        // 6
+    "Super",        // 7
+    "Unique"        // 8
+];
+
 export const petalTypes = [
     "Basic", // 0
     "Peas", 
@@ -182,7 +194,7 @@ export const petalStats = [
         damage: 2,
         heal: 0,
         max_health: 0, 
-        evasion: 0.15 // 20% chance to not attack + 10% per rarity
+        evasion: 0.03 // 5% chance to not attack + 5% per rarity
     },
     {
         name: "Honey",
@@ -205,7 +217,8 @@ export function showPetalStats(interaction) {
     const petal = interaction.options.get("petal").value;
     const rarity = interaction.options.get("rarity").value;
 
-    let statsText = "";
+    let statsText = `Stats for ${petalRarities[rarity]} ${petalTypes[petal]}:\n`;
+    console.log(petal)
     for (const [stat, val] of Object.entries(petalStats[petal])) {
         if(val <= 0 && stat != "damage") continue;
         if(typeof val != "number") continue;
@@ -216,7 +229,7 @@ export function showPetalStats(interaction) {
             continue;
         }
         if(stat == "evasion") {
-            statsText += `**${stat}:** ${val + (rarity * 0.05)}\n`
+            statsText += `**${stat}:** ${Math.floor((val + (rarity * 0.03)) * (100)) / (100)}\n`
             continue;
         }
         if(Number.isFinite(parseInt(val))) {

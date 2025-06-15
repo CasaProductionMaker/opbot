@@ -470,7 +470,7 @@ module.exports = {
             let talismanChance = 0;
             for (const petal of data[user.id]["loadout"]) {
                 if(petal.split("_")[0] == 20) {
-                    talismanChance = petalStats[20].evasion + (0.05 * (parseInt(petal.split("_")[1]) || 0));
+                    talismanChance = petalStats[20].evasion + (0.03 * (parseInt(petal.split("_")[1]) || 0));
                 }
             }
 
@@ -647,7 +647,7 @@ module.exports = {
                 // do not allow further rarity grinding at super level
                 if(data[user.id]["grind-info"].rarity == "ultra") {
                     interaction.update({
-                        content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 2)} stars!${petalDropText}\nWould you like to continue grinding in this zone?`, 
+                        content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 5)} stars!${petalDropText}\nWould you like to continue grinding in this zone?`, 
                         components: [
                             new ActionRowBuilder()
                                 .addComponents(
