@@ -1051,7 +1051,7 @@ export const mobStats = {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: [0], 
+        petalDrop: [24], 
         reroll: false
     },
     "Starfish": {
@@ -1137,7 +1137,7 @@ export const mobStats = {
         health: 4,
         damage: 1,
         loot: 1.5,
-        petalDrop: [0],
+        petalDrop: [13],
         reroll: false
     },
     "Wasp": {
@@ -1158,7 +1158,7 @@ export const mobStats = {
         health: 3,
         damage: 1,
         loot: 2,
-        petalDrop: [0],
+        petalDrop: [25],
         reroll: false
     },
     "Bush": {
@@ -1172,7 +1172,7 @@ export const mobStats = {
         health: 5,
         damage: 1,
         loot: 1,
-        petalDrop: [0],
+        petalDrop: [24],
         reroll: false
     },
     "Fly": {

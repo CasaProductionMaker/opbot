@@ -39,7 +39,8 @@ export const petalTypes = [
     "Honey", 
     "Triangle",
     "Claw",
-    "Iris"
+    "Iris",
+    "Bulb" // 25
 ]
 
 export const petalStats = [
@@ -228,6 +229,14 @@ export const petalStats = [
         poison: 3,
         heal: 0,
         max_health: 0
+    },
+    {
+        name: "Bulb",
+        description: "Attracts higher rarity mobs.",
+        damage: 0,
+        attraction: 0.09,
+        heal: 0,
+        max_health: 0
     }
 ]
 
@@ -248,6 +257,10 @@ export function showPetalStats(interaction) {
         }
         if(stat == "evasion") {
             statsText += `**${stat}:** ${Math.floor((val + (rarity * 0.03)) * (100)) / (100)}\n`
+            continue;
+        }
+        if(stat == "attraction") {
+            statsText += `**${stat}:** ${Math.floor((val*(rarity+1))* (100)) / (100)}\n`
             continue;
         }
         if(Number.isFinite(parseInt(val))) {

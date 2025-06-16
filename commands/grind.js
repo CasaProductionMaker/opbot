@@ -37,12 +37,21 @@ function generateMobs(biome, zone, rarity, userId, data, client) {
         }
         mobs.push(mob);
     }
+
+    let rareMobSpawn = constants.rareMobSpawn;
+
+    // check for bulb
+    for (const petal of data[userId]["loadout"]) {
+        if (petal.split("_")[0] == 25) {
+            rareMobSpawn += petalStats[petal.split("_")[0]].attraction * (1+ petal.split("_")[1]);
+        }
+    }
     
     let mobInfo = [];
     for (let i = 0; i < mobs.length; i++) {
         let mob_rarity = constants.petalRarities[constants.petalLowercaseRarities.indexOf(rarity)];
         if (rarity !== "ultra") {
-            if (Math.random() < constants.rareMobSpawn) {
+            if (Math.random() < rareMobSpawn) {
                 mob_rarity = constants.petalRarities[Math.min(constants.petalLowercaseRarities.indexOf(rarity) + 1, 6)];
             }
             mobInfo[i] = createMobInfo(mobs[i], mob_rarity);
