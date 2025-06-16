@@ -381,10 +381,10 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
             // Battery
             if (p_id == 29 && !isSuperMob && mobToAttack !== null) {
                 let totalDamage = 0;
-                for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
+                for (let i = 0; i < data[userID]["grind-info"].mobs.length; i++) {
                     // if mob is not dead
-                    if(data[user.id]["grind-info"].mobs[i].health > 0) {
-                        totalDamage += Math.ceil(data[user.id]["grind-info"].mobs[i].damage);
+                    if(data[userID]["grind-info"].mobs[i].health > 0) {
+                        totalDamage += Math.ceil(data[userID]["grind-info"].mobs[i].damage);
                     }
                 }
                 if(totalDamage > petalStats[p_id].threshold * (3 ** (petal.split("_")[1] || 0))) {
