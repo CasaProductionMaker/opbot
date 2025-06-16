@@ -370,7 +370,7 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                     let base_dmg = petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
                     let times_increase = Math.min(data[userID]["grind-info"].mobs[mobToAttack].pincer, petalStats[p_id].dmg_cap);
                     
-                    let increase_increment = petalStats[p_id].dmg_increase * times_increase;
+                    let increase_increment = petalStats[p_id].increase * times_increase;
                     let increased_dmg = increase_increment * (3 ** (petal.split("_")[1] || 0));
                     increased_dmg = Math.round(increased_dmg);
                     totalPlayerDamage += increased_dmg;

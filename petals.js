@@ -252,7 +252,7 @@ export const petalStats = [
         name: "Pincer",
         description: "Low dmg, but increases damage when hitting the same mob multiple times.",
         damage: 1,
-        dmg_increase: 1,
+        increase: 1,
         dmg_cap: 10,
         heal: 0,
         max_health: 0
