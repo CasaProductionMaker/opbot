@@ -677,7 +677,7 @@ module.exports = {
                     totalXP *= 5;
                 }
                 util.editXP(user.id, totalXP, data);
-                data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 4);
+                data[user.id]["stars"] = (data[user.id]["stars"] || 0) + Math.ceil(totalXP / 4.5);
 
                 // Update player inventory with drops
                 let petalDropText = "\n**New petals dropped!**";
@@ -700,7 +700,7 @@ module.exports = {
                 // do not allow further rarity grinding at super level
                 if(data[user.id]["grind-info"].rarity == "ultra") {
                     interaction.update({
-                        content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 4)} stars!${petalDropText}\nWould you like to continue grinding in this zone?`, 
+                        content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 4.5)} stars!${petalDropText}\nWould you like to continue grinding in this zone?`, 
                         components: [
                             new ActionRowBuilder()
                                 .addComponents(
@@ -734,7 +734,7 @@ module.exports = {
 
                 // allow user to continue grinding or go to higher rarity zone
                 interaction.update({
-                    content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 4)} stars!${petalDropText}\nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
+                    content: `You have completed the grind${gotRareLoot ? " and gotten **Rare Loot**" : ""}! This has given you ${totalXP} XP and ${Math.ceil(totalXP / 4.5)} stars!${petalDropText}\nWould you like to continue grinding in this zone or go to a higher rarity zone?`, 
                     components: [optionButtons], 
                     flags: MessageFlags.Ephemeral
                 });
