@@ -589,6 +589,7 @@ module.exports = {
 
             //damage player
             if(totalDamage > armour) {
+                // check evasion. 1% evasion per upgrade, up to 10%
                 let playerEvasion = data[user.id]["talents"]["evasion"]/100;
                 let evasionChance = Math.random();
                 if(evasionChance < playerEvasion) {

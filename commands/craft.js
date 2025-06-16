@@ -12,6 +12,8 @@ const saveData = util.saveData;
 const fillInProfileBlanks = util.fillInProfileBlanks;
 const petalCraftChances = constants.petalCraftChances;
 
+// +10% per talent upgrade, multiplicative.
+// So with 1 upgrade, rare -> epic would be 16% -> 16 + 1.6 = 17.6%
 function getCraftChance(rarity, data) {
     let craftChance = petalCraftChances[rarity];
     let craftUpgrades = data[user.id]["talents"]["craft_chance"];
