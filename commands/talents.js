@@ -88,7 +88,7 @@ module.exports = {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
         saveData(data);
-        let starCost = constants.talentCosts.max_hp[data[user.id]["talents"]["rare_drop_rate"]]
+        let starCost = constants.talentCosts.rare_drop_rate[data[user.id]["talents"]["rare_drop_rate"]]
         data[user.id]["stars"] -= starCost;
         data[user.id]["talents"]["rare_drop_rate"]++;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});

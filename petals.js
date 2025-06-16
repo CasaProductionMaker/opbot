@@ -37,7 +37,8 @@ export const petalTypes = [
     "Poo", 
     "Talisman", // 20
     "Honey", 
-    "Triangle"
+    "Triangle",
+    "Claw"
 ]
 
 export const petalStats = [
@@ -101,7 +102,7 @@ export const petalStats = [
     {
         name: "Missile", 
         description: "Goes off in a random direction, so it can miss the target.", 
-        damage: 4, 
+        damage: 7, 
         heal: 0, 
         max_health: 0
     }, 
@@ -208,6 +209,14 @@ export const petalStats = [
         name: "Triangle",
         description: "Does more damage based on how many you have equipped.",
         damage: 2,
+        heal: 0,
+        max_health: 0
+    },
+    {
+        name: "Claw",
+        description: "Does more damage to enemies with high hp.",
+        damage: 2,
+        extra_damage: 6,
         heal: 0,
         max_health: 0
     }

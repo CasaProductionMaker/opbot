@@ -1180,7 +1180,8 @@ export const mobStats = {
         damage: 1,
         loot: 1,
         petalDrop: [19, 20, 5],
-        reroll: false
+        reroll: false,
+        evasion: 0.05
     },
     "Moth": {
         health: 4,
@@ -1193,7 +1194,7 @@ export const mobStats = {
         health: 4,
         damage: 3,
         loot: 3,
-        petalDrop: [8],
+        petalDrop: [23],
         reroll: false
     }
 }

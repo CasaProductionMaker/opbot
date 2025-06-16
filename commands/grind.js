@@ -257,6 +257,7 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
             triangle_count += 1;
         }
     }
+    let mobName = data[userID]["grind-info"].mobs[mobToAttack].name;
     
     // check all petals for dmg and heals
     for (let double = 0; double < (doubleDamage ? 2 : 1); double++) {
@@ -289,6 +290,17 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                 let mobToHit = Math.floor(Math.random() * data[userID]["grind-info"].mobs.length);
                 if(data[userID]["grind-info"].mobs[mobToHit].health > 0 && mobToHit != mobToAttack) {
                     data[userID]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                }
+            }
+
+            // Claw
+            if (p_id == 23 && mobToAttack !== null) {
+                let mobMaxHP = mobStats[mobName].max_health;
+                let extra_dmg = petalStats[p_id].extra_damage * (3 ** (petal.split("_")[1] || 0));
+                // apply extra dmg if mob hp is above 80%
+                if(data[userID]["grind-info"].mobs[mobToAttack].health > mobMaxHP * 0.8) {
+                    data[userID]["grind-info"].mobs[mobToAttack].health -= extra_dmg;
+                    extraInfo += `\nYour Claw dealt ${extra_dmg} extra damage!`;
                 }
             }
 
@@ -341,6 +353,17 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
             if(data[userID]["health"] > data[userID]["max_health"]) {
                 data[userID]["health"] = data[userID]["max_health"]
             }
+        }
+    }
+    if(mobName == "Fly") {
+        let evasionChance = mobStats[mobName].evasion;
+        let mobRarity = data[userID]["grind-info"].mobs[mobToAttack].rarity
+        let mobRarityNumber = petalRarities.indexOf(mobRarity);
+        evasionChance = evasionChance * (mobRarityNumber + 1);
+        let flyEvasion = Math.random();
+        if(flyEvasion < evasionChance) {
+            totalPlayerDamage = 0;
+            extraInfo += "\nA fly has evaded your attack!";
         }
     }
     totalPlayerDamage = Math.max(totalPlayerDamage, 0);
@@ -562,7 +585,8 @@ module.exports = {
             if (data[user.id]["grind-info"].mobsLeft <= 0) {
                 let totalXP = 0;
                 let petalDrops = [];
-                let rareLootChance = constants.rareLootChance * ((data[user.id].talents["rare_drop_rate"]) * 0.5 + 1);
+                let rareLootChance = constants.rareLootChance +  data[user.id].talents["rare_drop_rate"] * 0.01; // 1% buff per upgrade level
+                console.log("rare loot chance: " + rareLootChance);
                 let gotRareLoot = Math.random() < rareLootChance;
 
                 // calc petal drops
