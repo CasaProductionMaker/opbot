@@ -162,6 +162,10 @@ client.on('interactionCreate', (interaction) => {
             talents.upgradeHPTalent(interaction, data);
         } else if (interaction.customId === 'rare_drop_rate-talent') {
             talents.upgradeRareLootChance(interaction, data);
+        } else if (interaction.customId === 'evasion-talent') {
+            talents.upgradeEvasionTalent(interaction, data);
+        } else if (interaction.customId === 'craft_chance-talent') {
+            talents.upgradeCraftChance(interaction, data);
         } else if (interaction.customId.includes("swappetal-")) {
             inventory.swapPetal(interaction, data);
         } else if (interaction.customId.includes("invpage-")) {

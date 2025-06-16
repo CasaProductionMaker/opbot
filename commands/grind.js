@@ -589,8 +589,15 @@ module.exports = {
 
             //damage player
             if(totalDamage > armour) {
-                data[user.id]["health"] -= totalDamage - armour;
+                let playerEvasion = data[user.id]["talents"]["evasion"]/100;
+                let evasionChance = Math.random();
+                if(evasionChance < playerEvasion) {
+                    extraInfo += `\nYour evasion allowed you to evade the attack!`;
+                } else {
+                    data[user.id]["health"] -= totalDamage - armour;
+                }
             }
+
             util.saveData(data);
             if (data[user.id]["health"] <= 0) {
                 delete data[user.id]["grind-info"];
