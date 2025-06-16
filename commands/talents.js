@@ -99,5 +99,21 @@ module.exports = {
             components: [], 
             flags: MessageFlags.Ephemeral
         })
+    },
+    upgradeCraftChance(interaction, data) {
+        const user = interaction.user;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+        let starCost = constants.talentCosts.craft_chance[data[user.id]["talents"]["craft_chance"]]
+        data[user.id]["stars"] -= starCost;
+        data[user.id]["talents"]["craft_chance"]++;
+        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
+        saveData(data);
+        
+        interaction.update({
+            content: `You have leveled up your craft chance for ${starCost} stars!`, 
+            components: [], 
+            flags: MessageFlags.Ephemeral
+        })
     }
 }

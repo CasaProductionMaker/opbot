@@ -26,10 +26,11 @@ export function fillInProfileBlanks(profile) {
         "evasion": 0,
         "max_hp": 0,
         "rare_drop_rate": 0,
-        "extra_petal_drops": 0
+        "extra_petal_drops": 0,
+        "craft_chance": 0
     };
 
-    let talent_list = ["loadout", "evasion", "max_hp", "rare_drop_rate", "extra_petal_drops"];
+    let talent_list = ["loadout", "evasion", "max_hp", "rare_drop_rate", "extra_petal_drops", "craft_chance"];
 
     for (const talent of talent_list) {
         if (!profile.talents[talent]) profile.talents[talent] = 0;

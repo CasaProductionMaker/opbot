@@ -12,6 +12,12 @@ const saveData = util.saveData;
 const fillInProfileBlanks = util.fillInProfileBlanks;
 const petalCraftChances = constants.petalCraftChances;
 
+function getCraftChance(rarity, data) {
+    let craftChance = petalCraftChances[rarity];
+    let craftUpgrades = data[user.id]["talents"]["craft_chance"];
+    return craftChance * (1+(craftUpgrades/10));
+}
+
 module.exports = {
     name: 'craft',
     description: 'Crafts a petal',
@@ -66,7 +72,7 @@ module.exports = {
         saveData(data);
 
 
-        if (Math.random() > petalCraftChances[currentPetalRarity]) { // failed craft
+        if (Math.random() > getCraftChance(currentPetalRarity, data)) { // failed craft
             data[user.id]["inventory"][petalType][currentPetalRarity] -= Math.ceil(Math.random() * 4);
             saveData(data);
 
@@ -187,7 +193,7 @@ module.exports = {
             data[user.id]["stars"] -= reqirement;
             saveData(data);
             
-            if (Math.random() > petalCraftChances[currentPetalRarity]) { // failed craft
+            if (Math.random() > getCraftChance(currentPetalRarity, data)) { // failed craft
                 data[user.id]["inventory"][petalType][currentPetalRarity] -= Math.ceil(Math.random() * 4);
             } else {
                 data[user.id]["inventory"][petalType][currentPetalRarity] -= 5; // success
