@@ -38,7 +38,8 @@ export const petalTypes = [
     "Talisman", // 20
     "Honey", 
     "Triangle",
-    "Claw"
+    "Claw",
+    "Iris"
 ]
 
 export const petalStats = [
@@ -217,6 +218,14 @@ export const petalStats = [
         description: "Does more damage to enemies with high hp.",
         damage: 2,
         extra_damage: 6,
+        heal: 0,
+        max_health: 0
+    },
+    {
+        name: "Iris",
+        description: "Deals strong poison damage which decays over time.",
+        damage: 0,
+        poison: 3,
         heal: 0,
         max_health: 0
     }

@@ -293,17 +293,6 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                 }
             }
 
-            // Claw
-            if (p_id == 23 && mobToAttack !== null) {
-                let mobMaxHP = mobStats[mobName].max_health;
-                let extra_dmg = petalStats[p_id].extra_damage * (3 ** (petal.split("_")[1] || 0));
-                // apply extra dmg if mob hp is above 80%
-                if(data[userID]["grind-info"].mobs[mobToAttack].health > mobMaxHP * 0.8) {
-                    data[userID]["grind-info"].mobs[mobToAttack].health -= extra_dmg;
-                    extraInfo += `\nYour Claw dealt ${extra_dmg} extra damage!`;
-                }
-            }
-
             // Stinger
             if (p_id == 16) { // 35% miss chance
                 // counteract regular dmg application with a subtraction
@@ -328,6 +317,22 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
             if (p_id == 22) {
                 totalPlayerDamage += (petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0)) * triangle_count);
                 continue;
+            }
+
+            // Claw
+            if (p_id == 23 && mobToAttack !== null) {
+                let mobMaxHP = mobStats[mobName].max_health;
+                let extra_dmg = petalStats[p_id].extra_damage * (3 ** (petal.split("_")[1] || 0));
+                // apply extra dmg if mob hp is above 80%
+                if(data[userID]["grind-info"].mobs[mobToAttack].health > mobMaxHP * 0.8) {
+                    data[userID]["grind-info"].mobs[mobToAttack].health -= extra_dmg;
+                    extraInfo += `\nYour Claw dealt ${extra_dmg} extra damage!`;
+                }
+            }
+
+            // Iris
+            if (p_id == 24 && mobToAttack !== null) {
+                data[userID]["grind-info"].mobs[mobToAttack].poison = petalStats[p_id].poison * (3 ** (petal.split("_")[1] || 0));
             }
 
             totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
@@ -529,6 +534,14 @@ module.exports = {
                     totalDamage += Math.ceil(data[user.id]["grind-info"].mobs[i].damage);
                 }
 
+                // apply poison
+                if(data[user.id]["grind-info"].mobs[i].poison && data[user.id]["grind-info"].mobs[i].poison > 0) {
+                    data[user.id]["grind-info"].mobs[i].health -= data[user.id]["grind-info"].mobs[i].poison;
+                    data[user.id]["grind-info"].mobs[i].poison *= 2/3;
+                    data[user.id]["grind-info"].mobs[i].poison = Math.floor(data[user.id]["grind-info"].mobs[i].poison);
+                    util.saveData(data);
+                }
+
                 // if a mob has died from this attack, count down with mobsLeft and update the button
                 if (data[user.id]["grind-info"].mobs[i].health <= 0 && !data[user.id]["grind-info"].mobs[i].dead) {
                     data[user.id]["grind-info"].mobsLeft -= 1;
@@ -586,7 +599,6 @@ module.exports = {
                 let totalXP = 0;
                 let petalDrops = [];
                 let rareLootChance = constants.rareLootChance +  data[user.id].talents["rare_drop_rate"] * 0.01; // 1% buff per upgrade level
-                console.log("rare loot chance: " + rareLootChance);
                 let gotRareLoot = Math.random() < rareLootChance;
 
                 // calc petal drops

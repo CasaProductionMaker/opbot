@@ -1030,7 +1030,7 @@ export const mobStats = {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: [0], 
+        petalDrop: [24], 
         reroll: false
     },
     "Cactus": {
