@@ -267,8 +267,8 @@ export const petalStats = [
     {
         name: "Battery",
         description: "Zaps all mobs if you take damage over a certain threshold.",
-        damage: 10,
-        threshold: 10, 
+        damage: 15,
+        threshold: 8, 
         heal: 0,
         max_health: 0
     }
