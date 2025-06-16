@@ -287,9 +287,10 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
 
             // Lightning
             if (p_id == 11 && !isSuperMob && mobToAttack !== null) {
-                for (let mobID = 0; mobID < data[userID]["grind-info"].mobs.length; mobID++)
-                if(data[userID]["grind-info"].mobs[mobID].health > 0) {
-                    data[userID]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                for (let mobID = 0; mobID < data[userID]["grind-info"].mobs.length; mobID++) {
+                    if(data[userID]["grind-info"].mobs[mobID].health > 0) {
+                        data[userID]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                    }
                 }
                 continue;
             }
@@ -375,6 +376,25 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                     totalPlayerDamage += increased_dmg;
                     data[userID]["grind-info"].mobs[mobToAttack].pincer += 1;
                 }
+            }
+
+            // Battery
+            if (p_id == 29 && !isSuperMob && mobToAttack !== null) {
+                let totalDamage = 0;
+                for (let i = 0; i < data[user.id]["grind-info"].mobs.length; i++) {
+                    // if mob is not dead
+                    if(data[user.id]["grind-info"].mobs[i].health > 0) {
+                        totalDamage += Math.ceil(data[user.id]["grind-info"].mobs[i].damage);
+                    }
+                }
+                if(totalDamage > petalStats[p_id].threshold * (3 ** (petal.split("_")[1] || 0))) {
+                    for (let mobID = 0; mobID < data[userID]["grind-info"].mobs.length; mobID++)  {
+                        if(data[userID]["grind-info"].mobs[mobID].health > 0) {
+                            data[userID]["grind-info"].mobs[mobID].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                        }
+                    }
+                }
+                continue;
             }
 
             totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));

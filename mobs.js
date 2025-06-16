@@ -991,6 +991,193 @@ export const biomes = {
                 connections: {}
             }
         }
+    },
+    "factory": {
+        name: "Factory",
+        mobs: [
+            "Mecha Wasp", 
+            "Mecha Spider", 
+            "Barrel"
+        ], 
+        startingZone: "Factory Spawn",
+        map: {
+            "Factory Spawn": {
+                name: "Factory Spawn", 
+                rarity: 0, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Mecha Spider", 
+                    "Barrel"
+                ],
+                connections: {
+                    "Forward": "Steel Fountain"
+                }
+            }, 
+            "Steel Fountain": {
+                name: "Steel Fountain", 
+                rarity: 1, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Mecha Spider", 
+                    "Barrel"
+                ],
+                connections: {
+                    "Forward": "Deforested Plain", 
+                    "Left": "Steel Hive", 
+                    "Right": "Toxic Suburbs"
+                }
+            }, 
+            "Deforested Plain": {
+                name: "Deforested Plain", 
+                rarity: 2, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Mecha Spider"
+                ],
+                connections: {
+                    "Forward": "Urban Hives", 
+                    "Left": "Metal Webs", 
+                    "Right": "Poison Lakes"
+                }
+            }, 
+            "Steel Hive": {
+                name: "Steel Hive", 
+                rarity: 2, 
+                mobs: [
+                    "Mecha Wasp"
+                ],
+                connections: {
+                    "Forward": "Metal Webs"
+                }
+            }, 
+            "Toxic Suburbs": {
+                name: "Toxic Suburbs", 
+                rarity: 2, 
+                mobs: [
+                    "Barrel"
+                ],
+                connections: {
+                    "Forward": "Poison Lakes"
+                }
+            }, 
+            "Metal Webs": {
+                name: "Metal Webs", 
+                rarity: 3, 
+                mobs: [
+                    "Mecha Spider"
+                ],
+                connections: {
+                    "Right": "Piston Hell"
+                }
+            }, 
+            "Urban Hives": {
+                name: "Urban Hives", 
+                rarity: 3, 
+                mobs: [
+                    "Mecha Wasp"
+                ],
+                connections: {
+                    "Left": "Piston Hell",
+                    "Right": "Toxic Hives"
+                }
+            }, 
+            "Poison Lakes": {
+                name: "Poison Lakes", 
+                rarity: 3, 
+                mobs: [
+                    "Barrel"
+                ],
+                connections: {
+                    "Left": "Toxic Hives"
+                }
+            }, 
+            "Piston Hell": {
+                name: "Piston Hell", 
+                rarity: 4, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Mecha Spider", 
+                    "Barrel"
+                ],
+                connections: {
+                    "Left": "Toxic Webs",
+                    "Right": "Venomous Hives"
+                }
+            }, 
+            "Toxic Hives": {
+                name: "Toxic Hives", 
+                rarity: 4, 
+                mobs: [
+                    "Barrel", 
+                    "Mecha Wasp"
+                ],
+                connections: {
+                    "Left": "Venomous Hives",
+                    "Right": "Horrendous Sheen"
+                }
+            }, 
+            "Toxic Webs": {
+                name: "Toxic Webs", 
+                rarity: 5, 
+                mobs: [
+                    "Barrel", 
+                    "Mecha Spider"
+                ],
+                connections: {
+                    "Forward": "Pools of Radiation", 
+                    "Right": "Mechanized Factory"
+                }
+            }, 
+            "Venomous Hives": {
+                name: "Venomous Hives", 
+                rarity: 5, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Barrel"
+                ],
+                connections: {
+                    "Forward": "Mechanized Factory"
+                }
+            }, 
+            "Horrendous Sheen": {
+                name: "Horrendous Sheen", 
+                rarity: 5, 
+                mobs: [
+                    "Mecha Spider", 
+                    "Mecha Wasp"
+                ],
+                connections: {
+                    "Left": "Mechanized Factory",
+                    "Forward": "Genetic Hives"
+                }
+            }, 
+            "Pools of Radiation": {
+                name: "Pools of Radiation", 
+                rarity: 6, 
+                mobs: [
+                    "Barrel"
+                ],
+                connections: {}
+            }, 
+            "Mechanized Factory": {
+                name: "Mechanized Factory", 
+                rarity: 6, 
+                mobs: [
+                    "Mecha Wasp", 
+                    "Mecha Spider", 
+                    "Barrel"
+                ],
+                connections: {}
+            }, 
+            "Genetic Hives": {
+                name: "Genetic Hives", 
+                rarity: 6, 
+                mobs: [
+                    "Mecha Wasp"
+                ],
+                connections: {}
+            }
+        }
     }
 }
 export const mobStats = {
@@ -1198,6 +1385,27 @@ export const mobStats = {
         damage: 3,
         loot: 3,
         petalDrop: [23],
+        reroll: false
+    },
+    "Mecha Wasp": {
+        health: 3,
+        damage: 3,
+        loot: 2,
+        petalDrop: [28],
+        reroll: false
+    },
+    "Mecha Spider": {
+        health: 6,
+        damage: 3,
+        loot: 5,
+        petalDrop: [29],
+        reroll: false
+    },
+    "Barrel": {
+        health: 4,
+        damage: 3,
+        loot: 3,
+        petalDrop: [24],
         reroll: false
     }
 }

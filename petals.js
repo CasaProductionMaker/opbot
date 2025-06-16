@@ -42,7 +42,9 @@ export const petalTypes = [
     "Iris",
     "Bulb", // 25
     "Coral",
-    "Pincer"
+    "Pincer", 
+    "Mecha Missile", 
+    "Battery"
 ]
 
 export const petalStats = [
@@ -254,11 +256,26 @@ export const petalStats = [
         dmg_cap: 10,
         heal: 0,
         max_health: 0
+    },
+    {
+        name: "Mecha Missile",
+        description: "Homes towards mobs.",
+        damage: 7,
+        heal: 0,
+        max_health: 0
+    },
+    {
+        name: "Battery",
+        description: "Zaps all mobs if you take damage over a certain threshold.",
+        damage: 10,
+        threshold: 10, 
+        heal: 0,
+        max_health: 0
     }
 ]
 
 export function showPetalStats(interaction) {
-    const petal = interaction.options.get("petal").value;
+    const petal = petalTypes.indexOf(interaction.options.get("petal").value);
     const rarity = interaction.options.get("rarity").value;
 
     let statsText = `Stats for ${petalRarities[rarity]} ${petalTypes[petal]}:\n`;

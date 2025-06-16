@@ -84,6 +84,10 @@ export const commands = [
                     {
                         name: "Sewers",
                         value: "sewers"
+                    },
+                    {
+                        name: "Factory",
+                        value: "factory"
                     }
                 ]
             }
@@ -213,9 +217,8 @@ export const commands = [
             {
                 name: "petal", 
                 description: "The petal to get stats of.", 
-                type: ApplicationCommandOptionType.Number, 
-                required: true, 
-                choices: petalTypes.map(( type, index ) => ({ name: type, value: index}))
+                type: ApplicationCommandOptionType.String, 
+                required: true
             }, 
             {
                 name: "rarity", 

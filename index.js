@@ -60,7 +60,7 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
     if(message.author.id == 1151946123997618358) {
-        if (message.content == "/send_embed") { // bruh what is this
+        if (message.content == "/send_embed") { // bruh what is this: oh dont worry abt it :D testing how embeds work
             const embed = new EmbedBuilder()
                 .setTitle("This is a title")
                 .setDescription("This is a description")
