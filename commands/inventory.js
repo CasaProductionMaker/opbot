@@ -70,7 +70,7 @@ module.exports = {
         let rows = [];
         let petalsSoFar = 0;
         for (const rarity in data[user.id]["inventory"][petal]) {
-            console.log("Petal", rarity);
+            // console.log("Petal", rarity);
             if(data[user.id]["inventory"][petal][rarity] <= 0) continue; // skip if no petals of this rarity
             if(petalsSoFar % 5 == 0) {
                 rows.push(new ActionRowBuilder());

@@ -1033,7 +1033,7 @@ export const mobStats = {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: [24], 
+        petalDrop: [24, 27], 
         reroll: false
     },
     "Cactus": {
@@ -1054,7 +1054,7 @@ export const mobStats = {
         health: 6, 
         damage: 3, 
         loot: 4, 
-        petalDrop: [24], 
+        petalDrop: [27], 
         reroll: false
     },
     "Starfish": {
@@ -1075,14 +1075,14 @@ export const mobStats = {
         health: 5, 
         damage: 1, 
         loot: 1, 
-        petalDrop: [0], 
+        petalDrop: [26], 
         reroll: false
     },
     "Shell": {
         health: 5, 
         damage: 2, 
         loot: 2, 
-        petalDrop: [0], 
+        petalDrop: [26], 
         reroll: false
     },
     "Bubble": {

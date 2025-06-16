@@ -40,7 +40,9 @@ export const petalTypes = [
     "Triangle",
     "Claw",
     "Iris",
-    "Bulb" // 25
+    "Bulb", // 25
+    "Coral",
+    "Pincer"
 ]
 
 export const petalStats = [
@@ -237,6 +239,21 @@ export const petalStats = [
         attraction: 0.09,
         heal: 0,
         max_health: 0
+    },
+    {
+        name: "Coral",
+        description: "Pretty sharp, but does less damage if hitting the same mob multiple times.",
+        damage: 8,
+        heal: 0
+    },
+    {
+        name: "Pincer",
+        description: "Low dmg, but increases damage when hitting the same mob multiple times.",
+        damage: 1,
+        dmg_increase: 1,
+        dmg_cap: 10,
+        heal: 0,
+        max_health: 0
     }
 ]
 
@@ -245,7 +262,7 @@ export function showPetalStats(interaction) {
     const rarity = interaction.options.get("rarity").value;
 
     let statsText = `Stats for ${petalRarities[rarity]} ${petalTypes[petal]}:\n`;
-    console.log(petal)
+    // console.log(petal)
     for (const [stat, val] of Object.entries(petalStats[petal])) {
         if(val <= 0 && stat != "damage") continue;
         if(typeof val != "number") continue;

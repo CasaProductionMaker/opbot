@@ -19,7 +19,7 @@ const saveData = util.saveData;
 const biomes = mobsfile.biomes;
 const isPetalEquipped = util.isPetalEquipped;
 
-function generateMobs(biome, zone, rarity, userId, data, client) {
+function generateMobs(biome, zone, rarity, userId, data, interaction) {
     let mobAmount = Math.round(Math.random() * constants.petalLowercaseRarities.indexOf(rarity) + 2);
     
     // check for poo and honey
@@ -56,7 +56,7 @@ function generateMobs(biome, zone, rarity, userId, data, client) {
             }
             mobInfo[i] = createMobInfo(mobs[i], mob_rarity);
         } else {
-            mobInfo[i] = handleUltraRarity(mobs[i], mob_rarity, data, client);
+            mobInfo[i] = handleUltraRarity(mobs[i], mob_rarity, data, interaction);
         }
     }
     
@@ -74,10 +74,10 @@ function createMobInfo(mob, rarity) {
     };
 }
 
-function handleUltraRarity(mob, rarity, data, client) {
+function handleUltraRarity(mob, rarity, data, interaction) {
     if (Math.random() < constants.superMobSpawn) {
-        console.log(`Super mob spawned: ${mob}`);
         if (!data["super-mob"]) {
+            console.log(`Super mob spawned: ${mob}`);
             data["super-mob"] = {
                 name: mob,
                 health: mobsfile.mobStats[mob].health * 78125,
@@ -86,7 +86,7 @@ function handleUltraRarity(mob, rarity, data, client) {
                 damagers: {}
             };
             saveData(data);
-            client.channels.cache.get("1371202463994216588").send({
+            interaction.channel.send({
                 content: `A Super ${mob} has spawned!\nHealth: ${data["super-mob"].health}\nDamage:${data["super-mob"].damage}\nLoot: ${data["super-mob"].loot}`,
                 components: [
                     new ActionRowBuilder()
@@ -225,7 +225,7 @@ function handleSuperMobDeath(superMob, mobInfo, data) {
     
     let lootList = "";
     for (const damagerId in allLooters) {
-        lootList += `<@${damagerId}>: ${allLooters[damagerId]} XP, ${Math.ceil(allLooters[damagerId] / 2)} stars\n`;
+        lootList += `<@${damagerId}>: ${allLooters[damagerId]} XP, ${Math.ceil(allLooters[damagerId] / 4.5)} stars\n`;
     }
     
     return {
@@ -344,6 +344,39 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                 data[userID]["grind-info"].mobs[mobToAttack].poison = petalStats[p_id].poison * (3 ** (petal.split("_")[1] || 0));
             }
 
+            // Coral
+            if (p_id == 26 && mobToAttack !== null) {
+                if(!data[userID]["grind-info"].mobs[mobToAttack].coral) {
+                    data[userID]["grind-info"].mobs[mobToAttack].coral = 1; // first hit do nothing
+                } else {
+                    // 2nd hit decrease dmg by 2^-coral
+                    // 2nd hit half, third hit 1/4, etc.
+                    let base_dmg = petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                    let reduced_dmg = base_dmg * (2 ** -data[userID]["grind-info"].mobs[mobToAttack].coral);
+                    reduced_dmg = Math.round(reduced_dmg);
+                    totalPlayerDamage -= base_dmg;
+                    totalPlayerDamage += reduced_dmg;
+                    data[userID]["grind-info"].mobs[mobToAttack].coral += 1;
+                }
+            }
+
+            // Pincer
+            if (p_id == 27 && mobToAttack !== null) {
+                if(!data[userID]["grind-info"].mobs[mobToAttack].pincer) {
+                    data[userID]["grind-info"].mobs[mobToAttack].pincer = 1; // first hit do nothing
+                } else {
+                    // 2nd hit increase dmg by a bit each time
+                    let base_dmg = petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                    let times_increase = Math.min(data[userID]["grind-info"].mobs[mobToAttack].pincer, petalStats[p_id].dmg_cap);
+                    
+                    let increase_increment = petalStats[p_id].dmg_increase * times_increase;
+                    let increased_dmg = increase_increment * (3 ** (petal.split("_")[1] || 0));
+                    increased_dmg = Math.round(increased_dmg);
+                    totalPlayerDamage += increased_dmg;
+                    data[userID]["grind-info"].mobs[mobToAttack].pincer += 1;
+                }
+            }
+
             totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
             
             if(mobToAttack !== null && !isSuperMob) {
@@ -400,7 +433,7 @@ module.exports = {
             return;
         }
 
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome.value, zone, rarity, user.id, data, client);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome.value, zone, rarity, user.id, data, interaction);
         const row = createActionRow(mobs);
         
         data[user.id]["grind-info"] = {
@@ -438,7 +471,7 @@ module.exports = {
             return;
         }
 
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome, zone, rarity, user.id, data, client);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome, zone, rarity, user.id, data, interaction);
         const row = createActionRow(mobs);
         
         data[user.id]["grind-info"] = {
@@ -944,7 +977,7 @@ module.exports = {
         }
         
         // Generate mobs for the new zone
-        const { mobs, mobInfo, mobAmount } = generateMobs(biome, newZone, newRarity, user.id, data, client);
+        const { mobs, mobInfo, mobAmount } = generateMobs(biome, newZone, newRarity, user.id, data, interaction);
         const row = createActionRow(mobs);
         
         // Update grind info with new zone and rarity
@@ -972,7 +1005,7 @@ module.exports = {
 
     respawn(interaction, data, saveData) {
         const user = interaction.user;
-        console.log("Respawn etc", data[user.id].health)
+        // console.log("Respawn etc", data[user.id].health)
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
         if(data[user.id]["health"] > 0) {
             interaction.reply("You are not dead! You cannot respawn.");

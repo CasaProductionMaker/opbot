@@ -70,7 +70,7 @@ module.exports = {
         const rarity = interaction.options.get("rarity").value;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {})
 
-        console.log(data[user.id]["inventory"][petal][rarity]);
+        // console.log(data[user.id]["inventory"][petal][rarity]);
         data[user.id]["inventory"][petal][rarity] -= 1;
         saveData(data);
         interaction.reply(`Removed ${getPetalRarity(petal)} ${getPetalType(petal)} from ${user.username}`)
