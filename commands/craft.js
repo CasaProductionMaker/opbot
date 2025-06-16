@@ -14,9 +14,9 @@ const petalCraftChances = constants.petalCraftChances;
 
 // +10% per talent upgrade, multiplicative.
 // So with 1 upgrade, rare -> epic would be 16% -> 16 + 1.6 = 17.6%
-function getCraftChance(rarity, data) {
+function getCraftChance(rarity, interaction, data) {
     let craftChance = petalCraftChances[rarity];
-    let craftUpgrades = data[user.id]["talents"]["craft_chance"];
+    let craftUpgrades = data[interaction.user.id]["talents"]["craft_chance"];
     return craftChance * (1+(craftUpgrades/10));
 }
 
@@ -74,7 +74,7 @@ module.exports = {
         saveData(data);
 
 
-        if (Math.random() > getCraftChance(currentPetalRarity, data)) { // failed craft
+        if (Math.random() > getCraftChance(currentPetalRarity, interaction, data)) { // failed craft
             data[user.id]["inventory"][petalType][currentPetalRarity] -= Math.ceil(Math.random() * 4);
             saveData(data);
 
@@ -195,7 +195,7 @@ module.exports = {
             data[user.id]["stars"] -= reqirement;
             saveData(data);
             
-            if (Math.random() > getCraftChance(currentPetalRarity, data)) { // failed craft
+            if (Math.random() > getCraftChance(currentPetalRarity, interaction, data)) { // failed craft
                 data[user.id]["inventory"][petalType][currentPetalRarity] -= Math.ceil(Math.random() * 4);
             } else {
                 data[user.id]["inventory"][petalType][currentPetalRarity] -= 5; // success
