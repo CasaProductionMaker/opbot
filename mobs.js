@@ -377,7 +377,8 @@ export const biomes = {
                     "Jellyfish",
                     "Sponge", 
                     "Shell", 
-                    "Bubble"
+                    "Bubble",
+                    "Crab"
                 ],
                 connections: {}
             },
@@ -389,7 +390,8 @@ export const biomes = {
                     "Jellyfish",
                     "Sponge", 
                     "Shell", 
-                    "Bubble"
+                    "Bubble",
+                    "Crab"
                 ],
                 connections: {
                     "Forward": "Tidal Pool",
@@ -430,7 +432,8 @@ export const biomes = {
                 mobs: [
                     "Starfish",
                     "Jellyfish",
-                    "Shell"
+                    "Shell",
+                    "Crab"
                 ],
                 connections: {
                     "Forward": "Rocky Waters"
@@ -1187,7 +1190,7 @@ export const mobStats = {
         health: 4,
         damage: 1.5,
         loot: 1.5,
-        petalDrop: [5],
+        petalDrop: [5, 25],
         reroll: false
     },
     "Crab": {
