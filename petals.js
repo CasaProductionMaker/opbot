@@ -44,7 +44,8 @@ export const petalTypes = [
     "Coral",
     "Pincer", 
     "Mecha Missile", 
-    "Battery"
+    "Battery", 
+    "Mecha Antenna" // 30
 ]
 
 export const petalStats = [
@@ -259,7 +260,7 @@ export const petalStats = [
     },
     {
         name: "Mecha Missile",
-        description: "Homes towards mobs.",
+        description: "Homes towards mobs if Mecha Antenna is equipped.",
         damage: 7,
         heal: 0,
         max_health: 0
@@ -269,6 +270,13 @@ export const petalStats = [
         description: "Zaps all mobs if you take damage over a certain threshold.",
         damage: 15,
         threshold: 8, 
+        heal: 0,
+        max_health: 0
+    },
+    {
+        name: "Mecha Antenna",
+        description: "It has a blinking red light on top. Allows you to control Mecha Missiles.",
+        damage: 0,
         heal: 0,
         max_health: 0
     }

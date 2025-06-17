@@ -397,6 +397,20 @@ function getTotalDamage(data, userID, mobToAttack=null, isSuperMob=false) {
                 continue;
             }
 
+            // Mecha Missile
+            if (p_id == 28 && !isSuperMob && mobToAttack !== null) {
+                let mechAntenna = util.isPetalEquipped(30, userID, data)
+                if (mechAntenna < (petal.split("_")[1] || 0)) {
+                    let mobToHit = Math.floor(Math.random() * data[userID]["grind-info"].mobs.length);
+                    if(data[userID]["grind-info"].mobs[mobToHit].health > 0) {
+                        data[userID]["grind-info"].mobs[mobToHit].health -= petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
+                    } else {
+                        extraInfo += "\nYour Mecha Missile missed!"
+                    }
+                    continue;
+                }
+            }
+
             totalPlayerDamage += petalStats[p_id].damage * (3 ** (petal.split("_")[1] || 0));
             
             if(mobToAttack !== null && !isSuperMob) {
