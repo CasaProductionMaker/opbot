@@ -1391,7 +1391,7 @@ export const mobStats = {
         health: 3,
         damage: 3,
         loot: 2,
-        petalDrop: [28],
+        petalDrop: [28, 30],
         reroll: false
     },
     "Mecha Spider": {
