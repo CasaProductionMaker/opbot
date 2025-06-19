@@ -98,7 +98,7 @@ client.on('interactionCreate', (interaction) => {
 
     // Normal commands
     if (interaction.commandName === 'craft_petal') {
-        craft.execute(interaction, data);
+        craft.displayCrafts(interaction, data);
     } else if (interaction.commandName === 'upgrade_talents') {
         talents.execute(interaction, data);
     } else if (interaction.commandName === 'grind') {

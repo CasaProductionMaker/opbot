@@ -49,7 +49,15 @@ export const commands = [
     }, 
     {
         name: "craft_petal", 
-        description: "Craft your petal for stars. This has a chance to fail which increases the higher the rarity."
+        description: "Craft your petal for stars. This has a chance to fail which increases the higher the rarity.", 
+        options: [
+            {
+                name: "petal", 
+                description: "The petal to attempt to craft.", 
+                type: ApplicationCommandOptionType.String, 
+                required: true
+            }
+        ]
     }, 
     {
         name: "grind", 

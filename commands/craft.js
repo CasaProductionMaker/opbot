@@ -238,7 +238,7 @@ module.exports = {
     displayCrafts(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-        const petalType = parseInt(interaction.customId.split("-")[1]);
+        const petalType = interaction.options.get("petal").value;
 
         let rows = [];
         let petalsSoFar = 0;
@@ -262,7 +262,7 @@ module.exports = {
             );
             petalsSoFar++;
         }
-        interaction.update({
+        interaction.reply({
             content: `What rarity to craft?\nYour stars: ${data[user.id].stars}`, 
             components: rows, 
             flags: MessageFlags.Ephemeral
