@@ -3,6 +3,7 @@
 // called when user clicks "craft [petal]" button
 const util = require('../util');
 const constants = require('../const');
+const petals = require('../petals');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 const petalRarities = constants.petalRarities;
@@ -238,7 +239,8 @@ module.exports = {
     displayCrafts(interaction, data) {
         const user = interaction.user;
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-        const petalType = interaction.options.get("petal").value;
+        const petalType = petals.petalTypes.indexOf(interaction.options.get("petal").value);
+        console.log(petalType)
 
         let rows = [];
         let petalsSoFar = 0;
