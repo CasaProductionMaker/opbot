@@ -5,6 +5,7 @@
 import { ApplicationCommandOptionType } from 'discord.js';
 import { petalTypes } from './petals.js';
 import { biomes } from './mobs.js';
+// import { description } from './commands/inventory.js';
 
 export const commands = [
     {
@@ -151,11 +152,19 @@ export const commands = [
         ]
     }, 
     {
-        name: "edit_loadout", 
-        description: "Edit your loadout."
+        name: "slot_loadout_petal", 
+        description: "Edit your loadout.", 
+        options: [
+            {
+                name: "petal", 
+                description: "The petal to slot into your loadout.", 
+                required: true, 
+                type: ApplicationCommandOptionType.String
+            }
+        ]
     }, 
     {
-        name: "edit_secondary_loadout", 
+        name: "slot_secondary_loadout_petal", 
         description: "Edit your secondary loadout."
     }, 
     {

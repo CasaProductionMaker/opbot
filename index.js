@@ -109,7 +109,7 @@ client.on('interactionCreate', (interaction) => {
         inventory.profile(interaction, data, saveData);
     } else if (interaction.commandName === 'respawn') {
         grind.respawn(interaction, data, saveData);
-    } else if (interaction.commandName === "edit_loadout") {
+    } else if (interaction.commandName === "slot_loadout_petal") {
         inventory.editLoadout(interaction, data, false);
     } else if (interaction.commandName === "edit_secondary_loadout") {
         inventory.editLoadout(interaction, data, true);
@@ -146,10 +146,6 @@ client.on('interactionCreate', (interaction) => {
             craft.attemptMegaCraft(interaction, data);
         } else if (interaction.customId.includes("craft-")) {
             craft.attemptCraft(interaction, data);
-        } else if (interaction.customId.includes("editloadout-")) {
-            inventory.editLoadoutSlot(interaction, data, false);
-        } else if (interaction.customId.includes("editloadout2-")) {
-            inventory.editLoadoutSlot(interaction, data, true);
         } else if (interaction.customId.includes("editslot-")) {
             inventory.selectPetalRarity(interaction, data, false);
         } else if (interaction.customId.includes("editslot2-")) {

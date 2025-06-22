@@ -119,6 +119,7 @@ module.exports = {
     // Choose which slot to edit
     editLoadout(interaction, data, secondary = false) {
         const user = interaction.user;
+        const petalID = petals.petalTypes.indexOf(interaction.options.get("petal").value)
         
         data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
 
@@ -133,7 +134,7 @@ module.exports = {
 
             rows[rows.length - 1].addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`editloadout${secondary ? "2" : ""}-${i}`)
+                    .setCustomId(`editslot${secondary ? "2" : ""}-${i}-${petalID}`)
                     .setLabel(`Slot ${i+1}`)
                     .setStyle(ButtonStyle.Primary)
             );
@@ -141,42 +142,7 @@ module.exports = {
         }
         
         interaction.reply({
-            content: `Which slot do you want to update?\n\nCurrent Loadout:\n${util.makeLoadoutText(user.id, data, secondary)}`, 
-            components: rows, 
-            flags: MessageFlags.Ephemeral
-        })
-    },
-
-    // Choose which petal to put in the slot
-    editLoadoutSlot(interaction, data, secondary = false) {
-        
-        const user = interaction.user;
-        data[user.id] = util.fillInProfileBlanks(data[user.id] || {});
-        saveData(data);
-        const slot = parseInt(interaction.customId.split("-")[1]);
-
-        let rows = [];
-        let petalsSoFar = 0;
-        for (const petal in data[user.id]["inventory"]) {
-            // skip if no petals of this type. Use reduce to calculate sum
-            if(data[user.id]["inventory"][petal].reduce((a, b) => a + b, 0) == 0) continue;
-            
-            // build petals
-            if(petalsSoFar % 5 == 0) {
-                rows.push(new ActionRowBuilder());
-            }
-
-            rows[rows.length - 1].addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`editslot${secondary ? "2" : ""}-${slot}-${petal}`)
-                    .setLabel(getPetalType(petal))
-                    .setStyle(ButtonStyle.Primary)
-            );
-            petalsSoFar++;
-        }
-
-        interaction.update({
-            content: `Which petal do you want to put in slot ${slot+1}?`, 
+            content: `Which slot do you want to put this petal in?\n\nCurrent Loadout:\n${util.makeLoadoutText(user.id, data, secondary)}`, 
             components: rows, 
             flags: MessageFlags.Ephemeral
         })
