@@ -130,6 +130,8 @@ client.on('interactionCreate', (interaction) => {
         superAttempts.registerSatt(interaction, data, saveData)
     } else if (interaction.commandName === "view_super_attempts") {
         superAttempts.viewSatts(interaction, data, saveData)
+    } else if (interaction.commandName === "view_super_attempt_image") {
+        superAttempts.viewSattImage(interaction, data, saveData)
     }
 
     // Button handlers

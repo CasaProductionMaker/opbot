@@ -358,5 +358,22 @@ export const commands = [
                 type: ApplicationCommandOptionType.User
             }
         ]
+    }, 
+    {
+        name: "view_super_attempt_image", 
+        description: "View the image of a Super attempt or one of another user.", 
+        options: [
+            {
+                name: "super_attempt_number", 
+                description: "The attempt number to check image of.", 
+                type: ApplicationCommandOptionType.Number, 
+                required: true
+            }, 
+            {
+                name: "user", 
+                description: "The user to check Super attempt image of.", 
+                type: ApplicationCommandOptionType.User
+            }
+        ]
     }
 ];
