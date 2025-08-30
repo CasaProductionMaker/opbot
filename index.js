@@ -1,5 +1,6 @@
 const petals = require('./petals');
 const inventory = require('./commands/inventory')
+const superAttempts = require('./commands/satt-tracker')
 const craft = require('./commands/craft')
 const talents = require('./commands/talents')
 const grind = require('./commands/grind')
@@ -125,6 +126,10 @@ client.on('interactionCreate', (interaction) => {
         grind.visitDummy(interaction, data);
     } else if (interaction.commandName === "inventory") {
         inventory.inventory(interaction, data, saveData)
+    } else if (interaction.commandName === "register_super_attempt") {
+        superAttempts.registerSatt(interaction, data, saveData)
+    } else if (interaction.commandName === "view_super_attempts") {
+        superAttempts.viewSatts(interaction, data, saveData)
     }
 
     // Button handlers

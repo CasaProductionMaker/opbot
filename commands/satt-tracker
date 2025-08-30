@@ -1,0 +1,56 @@
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
+
+const util = require('../util');
+const fs = require("fs");
+const saveData = util.saveData;
+
+module.exports = {
+    async registerSatt(interaction, data, saveData) {
+        const userID = interaction.user.id;
+        const attemptResult = interaction.options.get("result").value;
+        const attemptedPetal = interaction.options.get("petal").value;
+        const attachment = interaction.options.getAttachment("image");
+        data[userID] = util.fillInProfileBlanks(data[userID] || {});
+
+        try {
+            const response = await fetch(attachment.url);
+            const buffer = Buffer.from(await response.arrayBuffer());
+
+            const number = data[userID].superAttempts.length;
+            const fileExtension = attachment.name.split(".").pop();
+            const fileName = `${userID}satt${number}.${fileExtension}`;
+
+            const folderPath = "../saved_images";
+            if (!fs.existsSync(folderPath)) {
+                fs.mkdirSync(folderPath);
+            }
+
+            fs.writeFileSync(`${folderPath}/${fileName}`, buffer);
+        } catch (err) {
+            console.error(err);
+            return interaction.reply("Failed to register Super attempt, invalid image.");
+        }
+
+        data[userID].superAttempts.push({
+            petal: attemptedPetal, 
+            result: attemptResult
+        });
+        saveData();
+
+        interaction.reply(`Registered Super attempt: ${attemptResult} ${attemptedPetal}`);
+    }, 
+
+    viewSatts(interaction, data, saveData) {
+        const inter = interaction.options.get('user') || interaction;
+        data[inter.user.id] = util.fillInProfileBlanks(data[inter.user.id] || {});
+        saveData();
+
+        let superAttemptLog = `**${inter.user.username}**'s Super attempt log:\n`;
+        if (data[inter.user.id].superAttempts.length == 0) superAttemptLog += `\nNo recorded Super attempts yet!`;
+        for (let i = 0; i < data[inter.user.id].superAttempts.length; i++) {
+            superAttemptLog += `\n- Super attempt #${i+1}: ${data[inter.user.id].superAttempts[i].result} ${data[inter.user.id].superAttempts[i].petal}`
+        }
+
+        interaction.reply(superAttemptLog)
+    }
+}

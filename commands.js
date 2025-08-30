@@ -301,5 +301,62 @@ export const commands = [
                 type: ApplicationCommandOptionType.User
             }
         ]
+    }, 
+    {
+        name: "register_super_attempt", 
+        description: "Register a Super attempt to the OP Bot.", 
+        options: [
+            {
+                name: "petal", 
+                description: "The petal that you have attempted to craft a Super of.", 
+                type: ApplicationCommandOptionType.String, 
+                required: true
+            }, 
+            {
+                name: "result", 
+                description: "The result of the craft.", 
+                type: ApplicationCommandOptionType.String, 
+                choices: [
+                    {
+                        name: "-1", 
+                        value: "-1"
+                    }, 
+                    {
+                        name: "-2", 
+                        value: "-2"
+                    }, 
+                    {
+                        name: "-3", 
+                        value: "-3"
+                    }, 
+                    {
+                        name: "-4", 
+                        value: "-4"
+                    }, 
+                    {
+                        name: "+1", 
+                        value: "+1"
+                    }
+                ], 
+                required: true
+            }, 
+            {
+                name: "image", 
+                description: "An image of the result of the craft.", 
+                type: ApplicationCommandOptionType.Attachment, 
+                required: true
+            }
+        ]
+    }, 
+    {
+        name: "view_super_attempts", 
+        description: "View your Super attempts or the ones of another user.", 
+        options: [
+            {
+                name: "user", 
+                description: "The user to check Super attempts of.", 
+                type: ApplicationCommandOptionType.User
+            }
+        ]
     }
 ];

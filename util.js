@@ -21,6 +21,7 @@ export function fillInProfileBlanks(profile) {
     if (!profile.loadout) profile.loadout = ["0_0", "13_0"];
     if (!profile.second_loadout) profile.second_loadout = ["-1_0", "-1_0"];
     if (!profile.health) profile.health = 30;
+    if (!profile.superAttempts) profile.superAttempts = [];
     if (!profile.talents) profile.talents = {
         "loadout": 2,
         "evasion": 0,
